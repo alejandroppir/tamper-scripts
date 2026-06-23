@@ -1,10 +1,12 @@
 // ==UserScript==
 // @name         Abanca Repositorio - Gestor de Contextos Avanzado
-// @namespace    http://tampermonkey.net/
-// @version      2.4
+// @namespace    https://github.com/alejandroppir/tamper-scripts
+// @version      1.0
 // @description  Descarga masiva de CSVs mapeando respuestas XML de ASMX a archivos descargables reales nombrados por pestaña.
 // @match        http://exaplicaciones/rpos015/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/CGDN-contexts.user.js
+// @downloadURL  https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/CGDN-contexts.user.js
 // ==/UserScript==
 
 (function () {
