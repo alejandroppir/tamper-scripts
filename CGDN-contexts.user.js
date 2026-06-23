@@ -2,7 +2,7 @@
 // @name         Abanca Repositorio - Gestor de Contextos Avanzado
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.0.1
+// @version      1.0.2
 // @description  Descarga masiva de CSVs mapeando respuestas XML de ASMX a archivos descargables reales nombrados por pestaña.
 // @match        http://exaplicaciones/rpos015/*
 // @grant        none
@@ -202,7 +202,7 @@
     floatBtn.id = 'tm-floating-btn';
     floatBtn.innerHTML = `
             <button id="tm-btn-inject" class="tm-floating-subbtn" title="Inyectar controles alternativos">${plusSvg}</button>
-            <span class="tm-btn-text">Controles</span>
+            <span class="tm-btn-text">Controles2</span>
             <button id="tm-btn-remove" class="tm-floating-subbtn" title="Quitar controles de la página">${trashSvg}</button>
         `;
     document.body.appendChild(floatBtn);
