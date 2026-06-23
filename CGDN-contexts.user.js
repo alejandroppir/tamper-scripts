@@ -2,7 +2,7 @@
 // @name         Abanca Repositorio - Gestor de Contextos Avanzado
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.0
+// @version      1.0.1
 // @description  Descarga masiva de CSVs mapeando respuestas XML de ASMX a archivos descargables reales nombrados por pestaña.
 // @match        http://exaplicaciones/rpos015/*
 // @grant        none
