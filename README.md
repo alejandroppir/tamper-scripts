@@ -1,10 +1,11 @@
+# Scripts disponibles
 ARIA - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/ARIA.user.js  
 CGDN Contextos - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/CGDN-contexts.user.js  
 Gemini enter - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/gemini-enter.user.js  
 Imputador masivo - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/imputador-masivo.user.js  
 Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/extractor-tareas.user.js
 
-
+# Configuración
 Para configurar tamper monkey es necesario instalarlo desde la chrome store:
 https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo
 
