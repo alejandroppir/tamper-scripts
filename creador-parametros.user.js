@@ -1,11 +1,14 @@
 // ==UserScript==
 // @name         Creador Masivo de Parámetros
 // @namespace    https://github.com/alejandroppir/tamper-scripts
+// @author       @alejandroppir
 // @version      2.5.1
 // @description  Automatización de altas. Recreación de iframe por iteración para evitar bloqueos de caché.
 // @match        http://exaplicaciones/rpos015/*
 // @match        http://ecaplicaciones/rpos015/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
+// @downloadURL  https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
 // ==/UserScript==
 
 (function () {

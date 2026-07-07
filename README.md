@@ -5,7 +5,7 @@ CGDN Contextos - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/
 Gemini enter - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/gemini-enter.user.js  
 Imputador masivo - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/imputador-masivo.user.js  
 Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/extractor-tareas.user.js
-Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
+Creador parametros - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
 
 # Configuración
 
