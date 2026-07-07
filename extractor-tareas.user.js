@@ -2,7 +2,7 @@
 // @name         Extractor de Tareas de Proyectos ODEENE
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.1.0
+// @version      1.1.1
 // @description  Consulta asíncrona de datos de proyectos para ODEENE
 // @match        *://ecaplicaciones/RPOSAA0311/*
 // @match        file:///*
@@ -69,7 +69,11 @@
       }
 
       zonaArrastre.addEventListener('mousedown', (e) => {
-        if (e.target.closest('#tm-ext-close') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+        if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
+
+        e.preventDefault();
+        document.body.classList.add('tm-is-dragging');
+
         arrastrando = true;
         seMovio = false;
         const rect = elemento.getBoundingClientRect();
@@ -93,6 +97,9 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
+
+        document.body.classList.remove('tm-is-dragging');
+
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -182,6 +189,8 @@
             .tm-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); }
             .tm-modal-content { position: relative; background: #ffffff; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); width: 320px; z-index: 1; animation: tm-pop 0.3s ease-out; font-family: system-ui, -apple-system, sans-serif; }
             @keyframes tm-pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+            .tm-is-dragging iframe { pointer-events: none !important; }
         `;
     document.head.appendChild(style);
 
@@ -198,7 +207,7 @@
     panel.innerHTML = `
             <div id="tm-ext-header">
                 <div class="tm-ext-header-title">${logoSvg} Extractor de Tareas ODEENE</div>
-                <span id="tm-ext-close" title="Cerrar">✖</span>
+                <span id="tm-ext-close" class="no-drag" title="Cerrar">✖</span>
             </div>
             <div id="tm-ext-body">
                 <textarea id="tm-ext-csv-input" class="tm-ext-textarea" placeholder="Pega aquí los IDs de los proyectos (separados por saltos de línea o espacios. Ej: 60905 60906)"></textarea>

@@ -2,7 +2,7 @@
 // @name         Abanca Repositorio - Gestor de Contextos Avanzado
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.0.4
+// @version      1.0.5
 // @description  Descarga masiva de CSVs mapeando respuestas XML de ASMX a archivos descargables reales nombrados por pestaña.
 // @match        http://exaplicaciones/rpos015/*
 // @grant        none
@@ -62,13 +62,11 @@
       }
 
       zonaArrastre.addEventListener('mousedown', (e) => {
-        if (
-          e.target.id === 'tm-close' ||
-          e.target.id === 'tm-close-all' ||
-          e.target.classList.contains('tm-panel-btn') ||
-          e.target.classList.contains('tm-floating-subbtn')
-        )
-          return;
+        if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
+
+        e.preventDefault();
+        document.body.classList.add('tm-is-dragging');
+
         arrastrando = true;
         seMovio = false;
         const rect = elemento.getBoundingClientRect();
@@ -92,6 +90,9 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
+
+        document.body.classList.remove('tm-is-dragging');
+
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -278,6 +279,9 @@
                 top: 50%; left: 50%; transform: translate(-50%, -50%);
                 color: #94a3b8; text-align: center; font-size: 13px; font-weight: 500;
             }
+
+            /* REGLA CRÍTICA PARA EL GESTOR UI */
+            .tm-is-dragging iframe { pointer-events: none !important; }
         `;
     document.head.appendChild(style);
 

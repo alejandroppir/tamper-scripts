@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Creador Masivo de Parámetros
 // @namespace    https://github.com/alejandroppir/tamper-scripts
-// @version      2.5.0
+// @version      2.5.1
 // @description  Automatización de altas. Recreación de iframe por iteración para evitar bloqueos de caché.
 // @match        http://exaplicaciones/rpos015/*
 // @match        http://ecaplicaciones/rpos015/*
@@ -58,7 +58,11 @@
       }
 
       zonaArrastre.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.no-drag') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
+
+        e.preventDefault();
+        document.body.classList.add('tm-is-dragging');
+
         arrastrando = true;
         seMovio = false;
         const rect = elemento.getBoundingClientRect();
@@ -82,6 +86,9 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
+
+        document.body.classList.remove('tm-is-dragging');
+
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -155,6 +162,8 @@
             .tm-bg-ok { background: #dcfce7; color: #166534; }
             .tm-bg-error { background: #fee2e2; color: #991b1b; }
             .no-drag { cursor: pointer; }
+
+            .tm-is-dragging iframe { pointer-events: none !important; }
         `;
     document.head.appendChild(style);
 

@@ -2,7 +2,7 @@
 // @name         Imputador Masivo de Horas
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.1.0
+// @version      1.1.1
 // @description  Imputador masivo de horas de odeene
 // @match        http://ecaplicaciones/RPOS323/*
 // @grant        none
@@ -70,7 +70,11 @@
       }
 
       zonaArrastre.addEventListener('mousedown', (e) => {
-        if (e.target.id === 'tm-close' || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+        if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
+
+        e.preventDefault();
+        document.body.classList.add('tm-is-dragging');
+
         arrastrando = true;
         seMovio = false;
         const rect = elemento.getBoundingClientRect();
@@ -94,6 +98,9 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
+
+        document.body.classList.remove('tm-is-dragging');
+
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -247,6 +254,8 @@
             @keyframes tm-pop { 0% { transform: scale(0.88) translateY(8px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
             .tm-modal-content h3 { margin: 0 0 8px 0; color: #0f172a; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
             .tm-modal-content p { color: #64748b; margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; }
+
+            .tm-is-dragging iframe { pointer-events: none !important; }
         `;
     document.head.appendChild(style);
 
@@ -260,7 +269,7 @@
     panel.innerHTML = `
             <div id="tm-header">
                 <div class="tm-header-title">${logoSvg} Gestión de Imputaciones y Restante</div>
-                <span id="tm-close" title="Cerrar">✕</span>
+                <span id="tm-close" class="no-drag" title="Cerrar">✕</span>
             </div>
             <div id="tm-body">
                 <textarea id="tm-csv-input" class="tm-textarea" placeholder="Pega aquí los datos (Ej: ID_Proyecto;8;0;0;4;0;0;0)"></textarea>

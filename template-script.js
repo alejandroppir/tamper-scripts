@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [TEMPLATE] Nuevo Script con Panel Flotante
 // @namespace    https://github.com/alejandroppir/tamper-scripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Plantilla base estandarizada
 // @match        *://tu-url-aqui.com/*
 // @grant        none
@@ -56,7 +56,11 @@
       // 2. Eventos de ratón
       zonaArrastre.addEventListener('mousedown', (e) => {
         // Ignorar si se hace clic en botones de cerrar o acciones internas
-        if (e.target.closest('.no-drag') || e.target.tagName === 'BUTTON') return;
+        if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
+
+        e.preventDefault();
+        document.body.classList.add('tm-is-dragging');
+
         arrastrando = true;
         seMovio = false;
         const rect = elemento.getBoundingClientRect();
@@ -81,6 +85,9 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
+
+        document.body.classList.remove('tm-is-dragging');
+
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -100,6 +107,7 @@
             #tm-tpl-header { background: ${CONFIG.COLOR_PRIMARIO}; color: white; padding: 12px; cursor: grab; display: flex; justify-content: space-between; }
             #tm-tpl-header:active { cursor: grabbing; }
             .no-drag { cursor: pointer; }
+            .tm-is-dragging iframe { pointer-events: none !important; }
         `;
     document.head.appendChild(style);
 
