@@ -2,7 +2,7 @@
 // @name         Creador Masivo de Parámetros
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      2.5.1
+// @version      2.5.2
 // @description  Automatización de altas. Recreación de iframe por iteración para evitar bloqueos de caché.
 // @match        http://exaplicaciones/rpos015/*
 // @match        http://ecaplicaciones/rpos015/*
@@ -192,7 +192,7 @@
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <label style="font-size: 11px; font-weight: bold; color: #475569;">2. Pega CSV (Grupo;Proyecto;Parametro;Descripcion;Analista;Motivo)</label>
                         <label style="font-size: 11px; cursor: pointer; color: #0369a1; font-weight: bold;">
-                            <input type="checkbox" id="tm-debug-mode" class="no-drag" checked> 🐛 Ver Iframe de Trabajo (Debug)
+                            <input type="checkbox" id="tm-debug-mode" class="no-drag"> 🐛 Ver Iframe de Trabajo (Debug)
                         </label>
                     </div>
                     <textarea id="tm-csv-input" class="tm-textarea no-drag" placeholder="Ej: BGURCFG_ACTIVACIONES_PRUEBAS;67582;NUEVO_PARAM;Desc;V366723;Motivo"></textarea>
