@@ -6,6 +6,7 @@ Gemini enter - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/ma
 Imputador masivo - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/imputador-masivo.user.js  
 Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/extractor-tareas.user.js
 Creador parametros - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
+Consola fecha fin - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/consola-fecha-fin.user.js
 
 # Configuración
 
