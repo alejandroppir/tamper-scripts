@@ -19,20 +19,88 @@
   if (window.top !== window.self) return;
 
   // Paleta de colores oficial: VSCode Dark + Identidad Abanca
-  const COLOR_ABANCA = '#376466'; // Tu color corporativo original
-  const COLOR_ABANCA_HOVER = '#284d4f'; // Tu color secundario original
-  const VSCODE_BG_PANEL = '#1e1e1e'; // Fondo del editor principal
-  const VSCODE_BG_BODY = '#252526'; // Fondo de los paneles laterales
-  const VSCODE_HEADER = '#2d2d2d'; // Barra de actividad / Pestañas
+  const COLOR_ABANCA = '#376466';
+  const COLOR_ABANCA_HOVER = '#284d4f';
+  const VSCODE_BG_PANEL = '#1e1e1e';
+  const VSCODE_BG_BODY = '#252526';
+  const VSCODE_HEADER = '#2d2d2d';
   const VSCODE_TAB_ACTIVE = '#1e1e1e';
   const VSCODE_TAB_INACTIVE = '#2d2d2d';
-  const VSCODE_TEXT = '#d4d4d4'; // Texto plano de código
-  const VSCODE_TEXT_MUTED = '#858585'; // Texto secundario/comentarios de UI
+  const VSCODE_TEXT = '#d4d4d4';
+  const VSCODE_TEXT_MUTED = '#858585';
 
   const BTN_POS_KEY = 'tm_gl_btn_pos';
   const PANEL_POS_KEY = 'tm_gl_panel_pos';
   const PANEL_SIZE_KEY = 'tm_gl_panel_size';
   const TOKEN_STORAGE_KEY = 'tm_gl_private_token';
+
+  // =========================================================================
+  // GESTOR UI UNIVERSAL (Física y Persistencia)
+  // =========================================================================
+  const GestorUI = {
+    configurarArrastre: function (elemento, zonaArrastre, claveStorage, esBoton = false, posDefecto = {bottom: '20px', right: '20px'}) {
+      let arrastrando = false,
+        seMovio = false,
+        offsetX,
+        offsetY;
+
+      const posGuardada = localStorage.getItem(claveStorage);
+      if (posGuardada) {
+        try {
+          const p = JSON.parse(posGuardada);
+          const x = parseInt(p.left),
+            y = parseInt(p.top);
+          if (x >= 0 && y >= 0 && x < window.innerWidth - 50 && y < window.innerHeight - 50) {
+            elemento.style.left = p.left;
+            elemento.style.top = p.top;
+            elemento.style.bottom = 'auto';
+            elemento.style.right = 'auto';
+          } else {
+            aplicarPosicionDefecto();
+          }
+        } catch (e) {
+          aplicarPosicionDefecto();
+        }
+      } else {
+        aplicarPosicionDefecto();
+      }
+
+      function aplicarPosicionDefecto() {
+        Object.assign(elemento.style, posDefecto);
+      }
+
+      zonaArrastre.addEventListener('mousedown', (e) => {
+        if (e.target.id === 'tm-gl-close' || e.target.classList.contains('tm-gl-tab-btn') || e.target.classList.contains('tm-gl-segment-btn')) return;
+        arrastrando = true;
+        seMovio = false;
+        const rect = elemento.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        elemento.style.bottom = 'auto';
+        elemento.style.right = 'auto';
+        elemento.style.left = rect.left + 'px';
+        elemento.style.top = rect.top + 'px';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!arrastrando) return;
+        seMovio = true;
+        let newX = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - elemento.offsetWidth));
+        let newY = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - elemento.offsetHeight));
+        elemento.style.left = newX + 'px';
+        elemento.style.top = newY + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!arrastrando) return;
+        arrastrando = false;
+        if (seMovio) {
+          if (esBoton) elemento.dataset.dragged = 'true';
+          localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
+        }
+      });
+    },
+  };
 
   GM_addStyle(`
         #tm-gl-btn { position: fixed; z-index: 9999999; padding: 12px 18px; background: ${COLOR_ABANCA}; color: white; border-radius: 50px; cursor: pointer; font-family: system-ui, sans-serif; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); transition: background 0.2s ease; user-select: none; display: flex; align-items: center; gap: 8px; border: 1px solid #3c3c3c; }
@@ -50,16 +118,13 @@
         .tm-gl-tab-btn.active { background: ${VSCODE_TAB_ACTIVE}; color: #ffffff; border-top: 2px solid ${COLOR_ABANCA}; border-right: 1px solid #3c3c3c; }
 
         #tm-gl-body { padding: 18px; display: flex; flex-direction: column; gap: 14px; background: ${VSCODE_BG_BODY}; flex-grow: 1; overflow-y: auto; position: relative; }
-
         .tm-gl-section { display: flex; flex-direction: column; gap: 14px; height: 100%; }
 
-        /* Formularios estilo VSCode */
         .tm-gl-field-group { display: flex; flex-direction: column; gap: 6px; }
         .tm-gl-field-group label { font-weight: 700; font-size: 11px; color: ${VSCODE_TEXT_MUTED}; text-transform: uppercase; letter-spacing: 0.5px; }
         .tm-gl-input { padding: 8px 12px; border: 1px solid #3c3c3c; border-radius: 4px; font-size: 13px; font-family: monospace; background: #3c3c3c; color: #ffffff; }
         .tm-gl-input:focus { border-color: ${COLOR_ABANCA}; outline: none; }
 
-        /* Segmented Controls estilo VSCode Tabs */
         .tm-gl-segmented-control { display: flex; background: #2d2d2d; padding: 3px; border-radius: 6px; border: 1px solid #3c3c3c; }
         .tm-gl-segment-btn { flex: 1; border: none; background: transparent; padding: 8px; font-size: 12px; font-weight: 600; color: ${VSCODE_TEXT_MUTED}; border-radius: 4px; cursor: pointer; transition: all 0.15s ease; text-align: center; }
         .tm-gl-segment-btn.active { background: #3c3c3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); border-top: 1px solid ${COLOR_ABANCA}; }
@@ -68,7 +133,6 @@
         .tm-gl-help-box a { color: #3794ff; font-weight: 700; text-decoration: none; }
         .tm-gl-help-box a:hover { text-decoration: underline; }
 
-        /* Visor de Incidencias */
         .tm-gl-sticky-top { position: sticky; top: -18px; background: ${VSCODE_BG_BODY}; padding: 4px 0 12px 0; z-index: 100; border-bottom: 1px solid #3c3c3c; display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; flex-shrink: 0; }
         .tm-gl-nav { display: flex; justify-content: space-between; align-items: center; }
         .tm-gl-filters-bar { display: flex; gap: 4px; background: #2d2d2d; padding: 3px; border-radius: 6px; border: 1px solid #3c3c3c; }
@@ -89,11 +153,9 @@
         .tm-gl-path { font-family: monospace; font-size: 11px; color: #569cd6; word-break: break-all; cursor: pointer; text-decoration: underline; margin-top: 2px; font-weight: 600; }
         .tm-gl-path:hover { color: #4fc1ff; }
 
-        /* Editor de Código Estilo VSCode Dark+ */
         .tm-gl-code-container { width: 100%; overflow-x: auto; background: #1e1e1e; border-radius: 4px; margin-top: 4px; border: 1px solid #3c3c3c; display: flex; }
         .tm-gl-code { font-family: 'Consolas', 'Fira Code', monospace; color: #d4d4d4; padding: 12px; font-size: 11px; line-height: 1.6; display: block; white-space: pre; word-break: normal; word-wrap: normal; min-width: 100%; background: #1e1e1e; box-sizing: border-box; }
 
-        /* Resaltado de Sintaxis VSCode Dark+ */
         .hl-keyword { color: #c586c0; font-weight: 500; }
         .hl-type { color: #4ec9b0; }
         .hl-string { color: #ce9178; }
@@ -200,7 +262,7 @@
     helpBox.innerHTML = `
             Para generar un token, ve a esta ruta (<a href="https://gitlab.abanca.io/-/user_settings/personal_access_tokens" target="_blank">Settings > Access Tokens</a>) y crea un nuevo token.<br><br>
             Asegúrate de darle los permisos necesarios (al menos <strong>'read_user'</strong>, <strong>'api'</strong> para todas las funcionalidades).
-        `;
+    `;
     sectionExport.appendChild(helpBox);
 
     const tokenGroup = document.createElement('div');
@@ -310,7 +372,6 @@
     const prevBtn = document.createElement('button');
     prevBtn.className = 'tm-gl-btn-action';
     prevBtn.textContent = '◀ Ant';
-
     const centerControlDiv = document.createElement('div');
     centerControlDiv.style.display = 'flex';
     centerControlDiv.style.flexDirection = 'column';
@@ -411,6 +472,7 @@
       btnFormatHuman.classList.remove('active');
       activeFormatMode = 'json';
     });
+
     btnFormatHuman.addEventListener('click', () => {
       btnFormatHuman.classList.add('active');
       btnFormatJson.classList.remove('active');
@@ -422,6 +484,7 @@
       btnDetailExhaustive.classList.remove('active');
       activeDetailMode = 'basic';
     });
+
     btnDetailExhaustive.addEventListener('click', () => {
       btnDetailExhaustive.classList.add('active');
       btnDetailBasic.classList.remove('active');
@@ -447,10 +510,12 @@
     }
     tabBtnExport.addEventListener('click', () => switchTab('export'));
     tabBtnViewer.addEventListener('click', () => switchTab('viewer'));
+
     quickJumpToViewer.addEventListener('click', (e) => {
       e.preventDefault();
       switchTab('viewer');
     });
+
     quickJumpToExport.addEventListener('click', (e) => {
       e.preventDefault();
       switchTab('export');
@@ -513,16 +578,12 @@
                 if (change.new_file) fileContent += `*(Nuevo archivo)*\n`;
                 if (change.deleted_file) fileContent += `*(Archivo eliminado)*\n`;
 
-                // 1. Excluir package-lock.json por tamaño para no saturar el prompt
                 if (change.new_path.endsWith('package-lock.json')) {
                   fileContent += `*(Contenido omitido por tamaño)*\n\n\`\`\`diff\n${change.diff}\n\`\`\`\n\n`;
                   continue;
                 }
 
-                // 2. Incluir SIEMPRE el Diff unificado para aislar los cambios del MR actual
                 fileContent += `#### 🛠️ Cambios Introducidos (Diff):\n\`\`\`diff\n${change.diff}\n\`\`\`\n\n`;
-
-                // 3. Si es modo exhaustivo y el archivo no se ha borrado, adjuntar el código completo abajo como Contexto
                 if (activeDetailMode === 'exhaustive' && !change.deleted_file) {
                   const rawCode = await fetchFileRawContent(baseUrl, token, urlContext.projectPath, change.new_path);
                   if (rawCode) {
@@ -563,7 +624,6 @@
       });
     });
 
-    // Importación del JSON en el visor interactivo
     importBtn.addEventListener('click', async () => {
       errorDiv.classList.add('tm-gl-hidden');
       try {
@@ -640,7 +700,6 @@
         codePre.innerHTML = highlightCode(item.suggestion);
         codeContainer.classList.remove('tm-gl-hidden');
         codeContainer.scrollLeft = 0;
-        codeContainer.scrollLeft = 0;
       } else {
         codeContainer.classList.add('tm-gl-hidden');
       }
@@ -693,6 +752,7 @@
         renderSuggestion();
       }
     });
+
     nextBtn.addEventListener('click', () => {
       if (filteredSuggestions.length > 0) {
         currentIndex = (currentIndex + 1) % filteredSuggestions.length;
@@ -726,8 +786,36 @@
       }
     });
 
-    setupDraggableAndResizable(panel, header, resizer, PANEL_POS_KEY, PANEL_SIZE_KEY);
-    setupDraggableAndResizable(btn, btn, null, BTN_POS_KEY, null, true);
+    // ==========================================
+    // APLICAR GESTOR DE FÍSICA A LA UI
+    // ==========================================
+    GestorUI.configurarArrastre(btn, btn, BTN_POS_KEY, true, {bottom: '80px', right: '20px', top: 'auto', left: 'auto'});
+    GestorUI.configurarArrastre(panel, header, PANEL_POS_KEY, false, {top: '120px', right: '20px', bottom: 'auto', left: 'auto'});
+
+    // Lógica del resizer manual de ARIA
+    let isResizing = false;
+    let startWidth, startHeight, startX, startY;
+    resizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing = true;
+      startWidth = panel.offsetWidth;
+      startHeight = panel.offsetHeight;
+      startX = e.clientX;
+      startY = e.clientY;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isResizing) {
+        panel.style.width = Math.max(400, startWidth + (e.clientX - startX)) + 'px';
+        panel.style.height = Math.max(450, startHeight + (e.clientY - startY)) + 'px';
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        localStorage.setItem(PANEL_SIZE_KEY, JSON.stringify({width: panel.style.width, height: panel.style.height}));
+      }
+    });
 
     btn.addEventListener('click', () => {
       if (btn.dataset.dragged === 'true') {
@@ -736,102 +824,9 @@
       }
       panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
     });
+
     document.getElementById('tm-gl-close').addEventListener('click', () => {
       panel.style.display = 'none';
-    });
-  }
-
-  function setupDraggableAndResizable(element, dragHandle, resizeHandle, posKey, sizeKey, isButton = false) {
-    let isDragging = false,
-      isResizing = false,
-      hasMoved = false;
-    let startX, startY, startWidth, startHeight;
-
-    const savedPos = localStorage.getItem(posKey);
-    if (savedPos) {
-      try {
-        const pos = JSON.parse(savedPos);
-        if (parseInt(pos.left) >= 0 && parseInt(pos.top) >= 0 && parseInt(pos.left) < window.innerWidth && parseInt(pos.top) < window.innerHeight) {
-          element.style.bottom = 'auto';
-          element.style.right = 'auto';
-          element.style.left = pos.left;
-          element.style.top = pos.top;
-        } else {
-          resetPosition();
-        }
-      } catch (e) {
-        resetPosition();
-      }
-    } else {
-      resetPosition();
-    }
-
-    function resetPosition() {
-      if (isButton) {
-        element.style.bottom = '80px';
-        element.style.right = '20px';
-        element.style.top = 'auto';
-        element.style.left = 'auto';
-      } else {
-        element.style.top = '120px';
-        element.style.right = '20px';
-        element.style.bottom = 'auto';
-        element.style.left = 'auto';
-      }
-    }
-
-    dragHandle.addEventListener('mousedown', (e) => {
-      if (e.target.id === 'tm-gl-close' || e.target.classList.contains('tm-gl-tab-btn') || e.target.classList.contains('tm-gl-segment-btn')) return;
-      isDragging = true;
-      hasMoved = false;
-      const rect = element.getBoundingClientRect();
-      startX = e.clientX - rect.left;
-      startY = e.clientY - rect.top;
-      element.style.bottom = 'auto';
-      element.style.right = 'auto';
-      element.style.left = rect.left + 'px';
-      element.style.top = rect.top + 'px';
-    });
-
-    if (resizeHandle) {
-      resizeHandle.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        isResizing = true;
-        startWidth = element.offsetWidth;
-        startHeight = element.offsetHeight;
-        startX = e.clientX;
-        startY = e.clientY;
-      });
-    }
-
-    window.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        hasMoved = true;
-        let x = Math.max(0, Math.min(e.clientX - startX, window.innerWidth - element.offsetWidth));
-        let y = Math.max(0, Math.min(e.clientY - startY, window.innerHeight - element.offsetHeight));
-        element.style.left = x + 'px';
-        element.style.top = y + 'px';
-      } else if (isResizing) {
-        let w = Math.max(400, startWidth + (e.clientX - startX));
-        let h = Math.max(400, startHeight + (e.clientY - startY));
-        element.style.width = w + 'px';
-        element.style.height = h + 'px';
-      }
-    });
-
-    window.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        if (hasMoved) {
-          if (isButton) element.dataset.dragged = 'true';
-          localStorage.setItem(posKey, JSON.stringify({left: element.style.left, top: element.style.top}));
-        }
-      }
-      if (isResizing) {
-        isResizing = false;
-        if (sizeKey) localStorage.setItem(sizeKey, JSON.stringify({width: element.style.width, height: element.style.height}));
-      }
     });
   }
 

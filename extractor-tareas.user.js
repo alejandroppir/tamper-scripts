@@ -2,7 +2,7 @@
 // @name         Extractor de Tareas de Proyectos ODEENE
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.0
+// @version      1.1.0
 // @description  Consulta asíncrona de datos de proyectos para ODEENE
 // @match        *://ecaplicaciones/RPOSAA0311/*
 // @match        file:///*
@@ -32,6 +32,74 @@
   };
 
   const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 492.6 430.7"><g><circle fill="currentColor" cx="117" cy="233.4" r="9.3"/><circle fill="currentColor" cx="141.1" cy="233.4" r="9.3"/><circle fill="currentColor" cx="165.2" cy="233.4" r="9.3"/><circle fill="currentColor" cx="189.4" cy="233.4" r="9.3"/><circle fill="currentColor" cx="92.9" cy="233.4" r="9.3"/><circle fill="currentColor" cx="68.8" cy="233.4" r="9.3"/><circle fill="currentColor" cx="354.5" cy="233.4" r="9.3"/><circle fill="currentColor" cx="378.6" cy="233.4" r="9.3"/><circle fill="currentColor" cx="402.8" cy="233.4" r="9.3"/><circle fill="currentColor" cx="426.9" cy="233.4" r="9.3"/><circle fill="currentColor" cx="330.4" cy="233.4" r="9.3"/><circle fill="currentColor" cx="306.3" cy="233.4" r="9.3"/><circle fill="currentColor" cx="345.2" cy="255.1" r="9.3"/><circle fill="currentColor" cx="371.4" cy="255.1" r="9.3"/><circle fill="currentColor" cx="396.2" cy="255.3" r="9.3"/><circle fill="currentColor" cx="421.5" cy="255.5" r="9.3"/><circle fill="currentColor" cx="319.5" cy="255.1" r="9.3"/><circle fill="currentColor" cx="293.5" cy="255.1" r="9.3"/><circle fill="currentColor" cx="304.5" cy="273.5" r="9.3"/><circle fill="currentColor" cx="317.2" cy="295.2" r="9.3"/><circle fill="currentColor" cx="333.8" cy="277.8" r="9.3"/><circle fill="currentColor" cx="360.4" cy="278.9" r="9.3"/><circle fill="currentColor" cx="387.3" cy="279.8" r="9.3"/><circle fill="currentColor" cx="375" cy="300.3" r="9.3"/><circle fill="currentColor" cx="402.4" cy="300.6" r="9.3"/><circle fill="currentColor" cx="347.3" cy="299.2" r="9.3"/><circle fill="currentColor" cx="431.2" cy="313.8" r="9.3"/><circle fill="currentColor" cx="128" cy="255.1" r="9.3"/><circle fill="currentColor" cx="152.1" cy="255.1" r="9.3"/><circle fill="currentColor" cx="176.2" cy="255.1" r="9.3"/><circle fill="currentColor" cx="200.3" cy="255.1" r="9.3"/><circle fill="currentColor" cx="103.8" cy="255.1" r="9.3"/><circle fill="currentColor" cx="79.7" cy="255.1" r="9.3"/><circle fill="currentColor" cx="481.2" cy="277.8" r="9.3"/><circle fill="currentColor" cx="459" cy="233.4" r="9.3"/><circle fill="currentColor" cx="455.1" cy="357" r="9.3"/><circle fill="currentColor" cx="387" cy="379.2" r="9.3"/><circle fill="currentColor" cx="387" cy="322" r="9.3"/><circle fill="currentColor" cx="370" cy="337.6" r="9.3"/><circle fill="currentColor" cx="352.3" cy="355.7" r="9.3"/><circle fill="currentColor" cx="339.7" cy="334.2" r="9.3"/><circle fill="currentColor" cx="307" cy="327.1" r="9.3"/><circle fill="currentColor" cx="296.9" cy="308.2" r="9.3"/><circle fill="currentColor" cx="284.1" cy="289.2" r="9.3"/><circle fill="currentColor" cx="271.4" cy="268" r="9.3"/><circle fill="currentColor" cx="248.2" cy="275" r="9.3"/><circle fill="currentColor" cx="222.4" cy="268.6" r="9.3"/><circle fill="currentColor" cx="234.6" cy="293.7" r="9.3"/><circle fill="currentColor" cx="259.5" cy="292.3" r="9.3"/><circle fill="currentColor" cx="211.5" cy="288.6" r="9.3"/><circle fill="currentColor" cx="189.7" cy="273.5" r="9.3"/><circle fill="currentColor" cx="160.8" cy="276.6" r="9.3"/><circle fill="currentColor" cx="133.9" cy="277.9" r="9.3"/><circle fill="currentColor" cx="81.4" cy="277.9" r="9.3"/><circle fill="currentColor" cx="45" cy="238" r="9.3"/><circle fill="currentColor" cx="22.9" cy="270.4" r="9.3"/><circle fill="currentColor" cx="41.7" cy="311.2" r="9.3"/><circle fill="currentColor" cx="121.4" cy="299.7" r="9.3"/><circle fill="currentColor" cx="147.9" cy="299.7" r="9.3"/><circle fill="currentColor" cx="178.4" cy="295.2" r="9.3"/><circle fill="currentColor" cx="166.2" cy="315.2" r="9.3"/><circle fill="currentColor" cx="137.3" cy="319" r="9.3"/><circle fill="currentColor" cx="107.6" cy="320.6" r="9.3"/><circle fill="currentColor" cx="81.9" cy="323.1" r="9.3"/><circle fill="currentColor" cx="82.2" cy="351.5" r="9.3"/><circle fill="currentColor" cx="108.2" cy="359.2" r="9.3"/><circle fill="currentColor" cx="121.6" cy="339.8" r="9.3"/><circle fill="currentColor" cx="154.4" cy="335.1" r="9.3"/><circle fill="currentColor" cx="143.3" cy="355.2" r="9.3"/><circle fill="currentColor" cx="188.4" cy="327.9" r="9.3"/><circle fill="currentColor" cx="176.3" cy="348.4" r="9.3"/><circle fill="currentColor" cx="164.4" cy="367.9" r="9.3"/><circle fill="currentColor" cx="186.3" cy="377.2" r="9.3"/><circle fill="currentColor" cx="198.4" cy="355.7" r="9.3"/><circle fill="currentColor" cx="210.4" cy="337.2" r="9.3"/><circle fill="currentColor" cx="223" cy="315.8" r="9.3"/><circle fill="currentColor" cx="246.6" cy="319.4" r="9.3"/><circle fill="currentColor" cx="272.3" cy="315.8" r="9.3"/><circle fill="currentColor" cx="283.4" cy="337.6" r="9.3"/><circle fill="currentColor" cx="296.5" cy="357" r="9.3"/><circle fill="currentColor" cx="307.6" cy="379.2" r="9.3"/><circle fill="currentColor" cx="335.5" cy="406.1" r="9.3"/><circle fill="currentColor" cx="329.1" cy="367" r="9.3"/><circle fill="currentColor" cx="319.5" cy="348.1" r="9.3"/><circle fill="currentColor" cx="272.3" cy="362.5" r="9.3"/><circle fill="currentColor" cx="259.5" cy="339.8" r="9.3"/><circle fill="currentColor" cx="234.6" cy="340" r="9.3"/><circle fill="currentColor" cx="223" cy="362.5" r="9.3"/><circle fill="currentColor" cx="248.2" cy="363.8" r="9.3"/><circle fill="currentColor" cx="234.6" cy="388.6" r="9.3"/><circle fill="currentColor" cx="284.1" cy="384.4" r="9.3"/><circle fill="currentColor" cx="294.4" cy="408.1" r="9.3"/><circle fill="currentColor" cx="255.3" cy="416.2" r="9.3"/><circle fill="currentColor" cx="220.8" cy="408.1" r="9.3"/><circle fill="currentColor" cx="359.2" cy="317.8" r="9.3"/><circle fill="currentColor" cx="384.4" cy="420.4" r="9.3"/><circle fill="currentColor" cx="107.1" cy="278.6" r="9.3"/><circle fill="currentColor" cx="376.1" cy="185" r="9.3"/><circle fill="currentColor" cx="352" cy="185" r="9.3"/><circle fill="currentColor" cx="327.9" cy="185" r="9.3"/><circle fill="currentColor" cx="303.8" cy="185" r="9.3"/><circle fill="currentColor" cx="400.3" cy="185" r="9.3"/><circle fill="currentColor" cx="424.4" cy="185" r="9.3"/><circle fill="currentColor" cx="138.6" cy="185" r="9.3"/><circle fill="currentColor" cx="114.5" cy="185" r="9.3"/><circle fill="currentColor" cx="90.4" cy="185" r="9.3"/><circle fill="currentColor" cx="66.3" cy="185" r="9.3"/><circle fill="currentColor" cx="162.7" cy="185" r="9.3"/><circle fill="currentColor" cx="186.9" cy="185" r="9.3"/><circle fill="currentColor" cx="148" cy="163.4" r="9.3"/><circle fill="currentColor" cx="121.7" cy="163.4" r="9.3"/><circle fill="currentColor" cx="97" cy="163.1" r="9.3"/><circle fill="currentColor" cx="71.7" cy="162.9" r="9.3"/><circle fill="currentColor" cx="173.7" cy="163.4" r="9.3"/><circle fill="currentColor" cx="199.6" cy="163.4" r="9.3"/><circle fill="currentColor" cx="188.6" cy="144.9" r="9.3"/><circle fill="currentColor" cx="175.9" cy="123.2" r="9.3"/><circle fill="currentColor" cx="164.8" cy="103.3" r="9.3"/><circle fill="currentColor" cx="159.4" cy="140.7" r="9.3"/><circle fill="currentColor" cx="132.7" cy="139.5" r="9.3"/><circle fill="currentColor" cx="105.8" cy="138.6" r="9.3"/><circle fill="currentColor" cx="118.1" cy="118.1" r="9.3"/><circle fill="currentColor" cx="90.7" cy="117.8" r="9.3"/><circle fill="currentColor" cx="145.8" cy="119.2" r="9.3"/><circle fill="currentColor" cx="61.9" cy="104.6" r="9.3"/><circle fill="currentColor" cx="365.2" cy="163.4" r="9.3"/><circle fill="currentColor" cx="341.1" cy="163.4" r="9.3"/><circle fill="currentColor" cx="316.9" cy="163.4" r="9.3"/><circle fill="currentColor" cx="292.8" cy="163.4" r="9.3"/><circle fill="currentColor" cx="389.3" cy="163.4" r="9.3"/><circle fill="currentColor" cx="413.4" cy="163.4" r="9.3"/><circle fill="currentColor" cx="11.9" cy="140.7" r="9.3"/><circle fill="currentColor" cx="34.1" cy="185" r="9.3"/><circle fill="currentColor" cx="38" cy="61.5" r="9.3"/><circle fill="currentColor" cx="133.9" cy="99" r="9.3"/><circle fill="currentColor" cx="106.1" cy="96.4" r="9.3"/><circle fill="currentColor" cx="123.1" cy="80.8" r="9.3"/><circle fill="currentColor" cx="140.9" cy="62.7" r="9.3"/><circle fill="currentColor" cx="153.4" cy="84.2" r="9.3"/><circle fill="currentColor" cx="186.1" cy="91.3" r="9.3"/><circle fill="currentColor" cx="196.2" cy="110.2" r="9.3"/><circle fill="currentColor" cx="209" cy="129.2" r="9.3"/><circle fill="currentColor" cx="221.7" cy="150.4" r="9.3"/><circle fill="currentColor" cx="246.8" cy="145.2" r="9.3"/><circle fill="currentColor" cx="270.7" cy="149.8" r="9.3"/><circle fill="currentColor" cx="258.5" cy="124.7" r="9.3"/><circle fill="currentColor" cx="233.7" cy="126.2" r="9.3"/><circle fill="currentColor" cx="281.6" cy="129.8" r="9.3"/><circle fill="currentColor" cx="303.4" cy="144.9" r="9.3"/><circle fill="currentColor" cx="332.4" cy="141.8" r="9.3"/><circle fill="currentColor" cx="359.2" cy="140.5" r="9.3"/><circle fill="currentColor" cx="411.8" cy="140.5" r="9.3"/><circle fill="currentColor" cx="448.1" cy="180.4" r="9.3"/><circle fill="currentColor" cx="470.3" cy="148" r="9.3"/><circle fill="currentColor" cx="329.4" cy="313.8" r="9.3"/><circle fill="currentColor" cx="371.7" cy="118.8" r="9.3"/><circle fill="currentColor" cx="345.3" cy="118.8" r="9.3"/><circle fill="currentColor" cx="314.7" cy="123.2" r="9.3"/><circle fill="currentColor" cx="326.9" cy="103.3" r="9.3"/><circle fill="currentColor" cx="355.8" cy="99.5" r="9.3"/><circle fill="currentColor" cx="385.5" cy="97.8" r="9.3"/><circle fill="currentColor" cx="411.2" cy="95.3" r="9.3"/><circle fill="currentColor" cx="199.6" cy="306.5" r="9.3"/><circle fill="currentColor" cx="293.5" cy="109.8" r="9.3"/><circle fill="currentColor" cx="371.5" cy="78.6" r="9.3"/><circle fill="currentColor" cx="338.8" cy="83.3" r="9.3"/><circle fill="currentColor" cx="349.9" cy="63.2" r="9.3"/><circle fill="currentColor" cx="304.8" cy="90.5" r="9.3"/><circle fill="currentColor" cx="316.8" cy="70" r="9.3"/><circle fill="currentColor" cx="328.8" cy="50.5" r="9.3"/><circle fill="currentColor" cx="306.8" cy="41.2" r="9.3"/><circle fill="currentColor" cx="294.8" cy="62.7" r="9.3"/><circle fill="currentColor" cx="282.7" cy="81.2" r="9.3"/><circle fill="currentColor" cx="270.1" cy="102.6" r="9.3"/><circle fill="currentColor" cx="246.5" cy="99" r="9.3"/><circle fill="currentColor" cx="220.8" cy="102.6" r="9.3"/><circle fill="currentColor" cx="209.8" cy="80.8" r="9.3"/><circle fill="currentColor" cx="196.6" cy="61.5" r="9.3"/><circle fill="currentColor" cx="185.6" cy="39.2" r="9.3"/><circle fill="currentColor" cx="398.6" cy="118.8" r="9.3"/><circle fill="currentColor" cx="164.1" cy="51.4" r="9.3"/><circle fill="currentColor" cx="173.7" cy="70.3" r="9.3"/><circle fill="currentColor" cx="220.8" cy="55.9" r="9.3"/><circle fill="currentColor" cx="233.7" cy="78.6" r="9.3"/><circle fill="currentColor" cx="258.5" cy="78.4" r="9.3"/><circle fill="currentColor" cx="270.1" cy="55.9" r="9.3"/><circle fill="currentColor" cx="245" cy="54.7" r="9.3"/><circle fill="currentColor" cx="258.5" cy="29.9" r="9.3"/><circle fill="currentColor" cx="209" cy="34" r="9.3"/><circle fill="currentColor" cx="198.8" cy="10.3" r="9.3"/><circle fill="currentColor" cx="233.7" cy="31.8" r="9.3"/><circle fill="currentColor" cx="272.3" cy="10.3" r="9.3"/><circle fill="currentColor" cx="81" cy="138.5" r="9.3"/><circle fill="currentColor" cx="281.6" cy="34" r="9.3"/><circle fill="currentColor" cx="386.1" cy="139.8" r="9.3"/><circle fill="currentColor" cx="385.3" cy="208.7" r="9.3"/><circle fill="currentColor" cx="361.2" cy="208.7" r="9.3"/><circle fill="currentColor" cx="337" cy="208.7" r="9.3"/><circle fill="currentColor" cx="312.9" cy="208.7" r="9.3"/><circle fill="currentColor" cx="409.4" cy="208.7" r="9.3"/><circle fill="currentColor" cx="433.5" cy="208.7" r="9.3"/><circle fill="currentColor" cx="131.3" cy="208.7" r="9.3"/><circle fill="currentColor" cx="107.2" cy="208.7" r="9.3"/><circle fill="currentColor" cx="78.5" cy="208.7" r="9.3"/><circle fill="currentColor" cx="155.4" cy="208.7" r="9.3"/><circle fill="currentColor" cx="179.5" cy="208.7" r="9.3"/><circle fill="currentColor" cx="23.2" cy="210.6" r="9.3"/></g></svg>`;
+
+  // =========================================================================
+  // GESTOR UI UNIVERSAL (Física y Persistencia)
+  // =========================================================================
+  const GestorUI = {
+    configurarArrastre: function (elemento, zonaArrastre, claveStorage, esBoton = false, posDefecto = {bottom: '20px', right: '20px'}) {
+      let arrastrando = false,
+        seMovio = false,
+        offsetX,
+        offsetY;
+
+      const posGuardada = localStorage.getItem(claveStorage);
+      if (posGuardada) {
+        try {
+          const p = JSON.parse(posGuardada);
+          const x = parseInt(p.left),
+            y = parseInt(p.top);
+          if (x >= 0 && y >= 0 && x < window.innerWidth - 50 && y < window.innerHeight - 50) {
+            elemento.style.left = p.left;
+            elemento.style.top = p.top;
+            elemento.style.bottom = 'auto';
+            elemento.style.right = 'auto';
+          } else {
+            aplicarPosicionDefecto();
+          }
+        } catch (e) {
+          aplicarPosicionDefecto();
+        }
+      } else {
+        aplicarPosicionDefecto();
+      }
+
+      function aplicarPosicionDefecto() {
+        Object.assign(elemento.style, posDefecto);
+      }
+
+      zonaArrastre.addEventListener('mousedown', (e) => {
+        if (e.target.closest('#tm-ext-close') || e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+        arrastrando = true;
+        seMovio = false;
+        const rect = elemento.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        elemento.style.bottom = 'auto';
+        elemento.style.right = 'auto';
+        elemento.style.left = rect.left + 'px';
+        elemento.style.top = rect.top + 'px';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!arrastrando) return;
+        seMovio = true;
+        let newX = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - elemento.offsetWidth));
+        let newY = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - elemento.offsetHeight));
+        elemento.style.left = newX + 'px';
+        elemento.style.top = newY + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!arrastrando) return;
+        arrastrando = false;
+        if (seMovio) {
+          if (esBoton) elemento.dataset.dragged = 'true';
+          localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
+        }
+      });
+    },
+  };
 
   // =========================================================================
   // INYECCIÓN DE ESTILOS CSS Y ARRANQUE SEGURO
@@ -176,6 +244,31 @@
     document.body.appendChild(successModal);
 
     // =========================================================================
+    // APLICACIÓN DEL GESTOR DE ARRASTRE
+    // =========================================================================
+    GestorUI.configurarArrastre(floatBtn, floatBtn, CONFIG.BTN_POS_KEY, true, {bottom: '20px', right: '20px', top: 'auto', left: 'auto'});
+    GestorUI.configurarArrastre(panel, document.getElementById('tm-ext-header'), CONFIG.PANEL_POS_KEY, false, {
+      top: '20px',
+      right: '20px',
+      bottom: 'auto',
+      left: 'auto',
+    });
+
+    floatBtn.addEventListener('click', (e) => {
+      if (floatBtn.dataset.dragged === 'true') {
+        floatBtn.dataset.dragged = 'false';
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      panel.style.display = panel.style.display !== 'flex' ? 'flex' : 'none';
+    });
+
+    document.getElementById('tm-ext-close').addEventListener('click', () => {
+      panel.style.display = 'none';
+    });
+
+    // =========================================================================
     // ESTADO GLOBAL Y HELPERS
     // =========================================================================
     let stateData = [];
@@ -186,7 +279,6 @@
 
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    // Helper para extraer un número puro de un texto complejo (ej "1.600,5 h (200 d)" -> 1600.5)
     function parseHours(str) {
       if (!str || str.trim() === '-' || str.trim() === '') return 0;
       const match = str.match(/[\d,.]+/);
@@ -197,33 +289,6 @@
     }
 
     function loadState() {
-      const storedBtnPos = localStorage.getItem(CONFIG.BTN_POS_KEY);
-      if (storedBtnPos) {
-        try {
-          const posBtn = JSON.parse(storedBtnPos);
-          floatBtn.style.bottom = 'auto';
-          floatBtn.style.right = 'auto';
-          floatBtn.style.left = posBtn.left;
-          floatBtn.style.top = posBtn.top;
-        } catch (e) {}
-      } else {
-        floatBtn.style.bottom = '20px';
-        floatBtn.style.right = '20px';
-      }
-
-      const storedPanelPos = localStorage.getItem(CONFIG.PANEL_POS_KEY);
-      if (storedPanelPos) {
-        try {
-          const posPanel = JSON.parse(storedPanelPos);
-          panel.style.right = 'auto';
-          panel.style.left = posPanel.left;
-          panel.style.top = posPanel.top;
-        } catch (e) {}
-      } else {
-        panel.style.top = '20px';
-        panel.style.right = '20px';
-      }
-
       const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
       if (stored) {
         try {
@@ -238,81 +303,6 @@
         }
       }
     }
-
-    // =========================================================================
-    // LÓGICA DE DRAG & DROP
-    // =========================================================================
-    let isBtnDragging = false;
-    let btnDragHasMoved = false;
-    let btnOffsetX, btnOffsetY;
-
-    floatBtn.addEventListener('mousedown', (e) => {
-      isBtnDragging = true;
-      btnDragHasMoved = false;
-      const rect = floatBtn.getBoundingClientRect();
-      btnOffsetX = e.clientX - rect.left;
-      btnOffsetY = e.clientY - rect.top;
-
-      floatBtn.style.bottom = 'auto';
-      floatBtn.style.right = 'auto';
-      floatBtn.style.left = rect.left + 'px';
-      floatBtn.style.top = rect.top + 'px';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (isBtnDragging) {
-        btnDragHasMoved = true;
-        let newX = Math.max(0, Math.min(e.clientX - btnOffsetX, window.innerWidth - floatBtn.offsetWidth));
-        let newY = Math.max(0, Math.min(e.clientY - btnOffsetY, window.innerHeight - floatBtn.offsetHeight));
-        floatBtn.style.left = newX + 'px';
-        floatBtn.style.top = newY + 'px';
-      }
-      if (isPanelDragging) {
-        let newX = Math.max(0, Math.min(e.clientX - panelOffsetX, window.innerWidth - panel.offsetWidth));
-        let newY = Math.max(0, Math.min(e.clientY - panelOffsetY, window.innerHeight - panel.offsetHeight));
-        panel.style.left = newX + 'px';
-        panel.style.top = newY + 'px';
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isBtnDragging) {
-        isBtnDragging = false;
-        if (btnDragHasMoved) {
-          localStorage.setItem(CONFIG.BTN_POS_KEY, JSON.stringify({left: floatBtn.style.left, top: floatBtn.style.top}));
-        }
-      }
-      if (isPanelDragging) {
-        isPanelDragging = false;
-        localStorage.setItem(CONFIG.PANEL_POS_KEY, JSON.stringify({left: panel.style.left, top: panel.style.top}));
-      }
-    });
-
-    floatBtn.addEventListener('click', (e) => {
-      if (btnDragHasMoved) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      panel.style.display = panel.style.display !== 'flex' ? 'flex' : 'none';
-    });
-
-    let isPanelDragging = false;
-    let panelOffsetX, panelOffsetY;
-    const tmHeader = document.getElementById('tm-ext-header');
-
-    tmHeader.addEventListener('mousedown', (e) => {
-      if (e.target.id === 'tm-ext-close') return;
-      isPanelDragging = true;
-      const rect = panel.getBoundingClientRect();
-      panelOffsetX = e.clientX - rect.left;
-      panelOffsetY = e.clientY - rect.top;
-      panel.style.right = 'auto';
-      panel.style.left = rect.left + 'px';
-      panel.style.top = rect.top + 'px';
-    });
-
-    document.getElementById('tm-ext-close').addEventListener('click', () => (panel.style.display = 'none'));
 
     // =========================================================================
     // ACCIONES DE BOTONES
@@ -394,12 +384,10 @@
             headers: {'Content-Type': 'application/json; charset=UTF-8'},
             body: JSON.stringify({text: `✅ *Extracción de ODEENE Finalizada*\n📅 Fecha: ${fecha}\nProyectos procesados: ${stateData.length}`}),
           }).catch((e) => console.error('Error enviando webhook:', e));
-
           msg += '<br><br><b>Se ha enviado mensaje al chat.</b>';
         }
 
         msg += '<br><br><b>Puedes descargar los resultados en CSV desde el botón superior.</b>';
-
         document.getElementById('tm-success-message').innerHTML = msg;
         document.getElementById('tm-success-modal').classList.remove('tm-ext-hidden');
       }
@@ -475,7 +463,6 @@
 
           const filas = doc.querySelectorAll('tr[class*="celda"]');
           let targetRow = null;
-
           for (let fila of filas) {
             if (fila.textContent.includes('ODEENE')) {
               if (fila.querySelector('input[type="checkbox"]') && fila.querySelector('[id*="lblTrabajoPlanificado"]')) {
@@ -534,7 +521,6 @@
 
             let calcConsumo = plan - inc;
             project.data.calcConsumo = isNaN(calcConsumo) ? '-' : calcConsumo.toString().replace('.', ',');
-
             project.analysisWarning = 'ninguno';
 
             if (plan > 0) {
@@ -676,7 +662,6 @@
         String(fecha.getHours()).padStart(2, '0') +
         '-' +
         String(fecha.getMinutes()).padStart(2, '0');
-
       const filename = `Extraccion_ODEENE_${strFecha}.csv`;
 
       let csvContent =

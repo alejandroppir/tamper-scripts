@@ -2,7 +2,7 @@
 // @name         Abanca Repositorio - Gestor de Contextos Avanzado
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.0.3
+// @version      1.0.4
 // @description  Descarga masiva de CSVs mapeando respuestas XML de ASMX a archivos descargables reales nombrados por pestaña.
 // @match        http://exaplicaciones/rpos015/*
 // @grant        none
@@ -27,11 +27,84 @@
   };
 
   // =========================================================================
+  // GESTOR UI UNIVERSAL (Física y Persistencia)
+  // =========================================================================
+  const GestorUI = {
+    configurarArrastre: function (elemento, zonaArrastre, claveStorage, esBoton = false, posDefecto = {bottom: '20px', right: '20px'}) {
+      let arrastrando = false,
+        seMovio = false,
+        offsetX,
+        offsetY;
+
+      const posGuardada = localStorage.getItem(claveStorage);
+      if (posGuardada) {
+        try {
+          const p = JSON.parse(posGuardada);
+          const x = parseInt(p.left),
+            y = parseInt(p.top);
+          if (x >= 0 && y >= 0 && x < window.innerWidth - 50 && y < window.innerHeight - 50) {
+            elemento.style.left = p.left;
+            elemento.style.top = p.top;
+            elemento.style.bottom = 'auto';
+            elemento.style.right = 'auto';
+          } else {
+            aplicarPosicionDefecto();
+          }
+        } catch (e) {
+          aplicarPosicionDefecto();
+        }
+      } else {
+        aplicarPosicionDefecto();
+      }
+
+      function aplicarPosicionDefecto() {
+        Object.assign(elemento.style, posDefecto);
+      }
+
+      zonaArrastre.addEventListener('mousedown', (e) => {
+        if (
+          e.target.id === 'tm-close' ||
+          e.target.id === 'tm-close-all' ||
+          e.target.classList.contains('tm-panel-btn') ||
+          e.target.classList.contains('tm-floating-subbtn')
+        )
+          return;
+        arrastrando = true;
+        seMovio = false;
+        const rect = elemento.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        elemento.style.bottom = 'auto';
+        elemento.style.right = 'auto';
+        elemento.style.left = rect.left + 'px';
+        elemento.style.top = rect.top + 'px';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!arrastrando) return;
+        seMovio = true;
+        let newX = Math.max(0, Math.min(e.clientX - offsetX, window.innerWidth - elemento.offsetWidth));
+        let newY = Math.max(0, Math.min(e.clientY - offsetY, window.innerHeight - elemento.offsetHeight));
+        elemento.style.left = newX + 'px';
+        elemento.style.top = newY + 'px';
+      });
+
+      document.addEventListener('mouseup', () => {
+        if (!arrastrando) return;
+        arrastrando = false;
+        if (seMovio) {
+          if (esBoton) elemento.dataset.dragged = 'true';
+          localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
+        }
+      });
+    },
+  };
+
+  // =========================================================================
   // 2. ARRANQUE SEGURO (Solo en la ventana principal para evitar duplicados)
   // =========================================================================
   function inicializarScript() {
     if (window !== window.top) return;
-
     if (!document.body) {
       setTimeout(inicializarScript, 100);
       return;
@@ -46,7 +119,6 @@
     const style = document.createElement('style');
     style.textContent = `
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
             * { box-sizing: border-box; }
 
             #tm-panel, #tm-floating-btn {
@@ -139,14 +211,17 @@
             .tm-header-actions { display: flex; align-items: center; gap: 6px; }
 
             .tm-panel-btn {
-                background: rgba(255,255,255,0.12); border: none; color: white;
+                background: rgba(255,255,255,0.12);
+                border: none; color: white;
                 padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-                cursor: pointer; transition: background 0.15s; display: inline-flex; align-items: center; gap: 4px;
+                cursor: pointer; transition: background 0.15s; display: inline-flex;
+                align-items: center; gap: 4px;
             }
             .tm-panel-btn:hover { background: rgba(255,255,255,0.25); }
 
             #tm-close {
-                cursor: pointer; width: 28px; height: 28px; display: flex;
+                cursor: pointer;
+                width: 28px; height: 28px; display: flex;
                 align-items: center; justify-content: center; border-radius: 6px;
                 opacity: 0.7; transition: all 0.15s ease; font-size: 14px;
             }
@@ -154,25 +229,31 @@
 
             /* ---- PESTAÑAS ---- */
             #tm-tab-bar {
-                display: flex; background: #eef2f5; border-bottom: 1px solid #e2e8f0;
+                display: flex;
+                background: #eef2f5; border-bottom: 1px solid #e2e8f0;
                 padding: 8px 8px 0 8px; gap: 4px; overflow-x: auto; flex-shrink: 0;
             }
             .tm-tab-item {
-                display: flex; align-items: center; background: #cbd5e1;
+                display: flex;
+                align-items: center; background: #cbd5e1;
                 color: #475569; padding: 6px 12px; border-radius: 8px 8px 0 0;
-                cursor: grab; font-size: 11px; font-weight: 600; transition: background 0.15s, border-top 0.15s;
+                cursor: grab; font-size: 11px; font-weight: 600;
+                transition: background 0.15s, border-top 0.15s;
                 max-width: 140px; border: 1px solid #cbd5e1; border-bottom: none;
             }
             .tm-tab-item:hover { background: #94a3b8; color: #1e293b; }
             .tm-tab-item.active {
-                background: #ffffff; color: ${CONFIG.COLOR_PRIMARIO}; font-weight: 700;
+                background: #ffffff;
+                color: ${CONFIG.COLOR_PRIMARIO}; font-weight: 700;
                 border-top: 3px solid ${CONFIG.COLOR_PRIMARIO}; padding-top: 4px; cursor: grab;
             }
             .tm-tab-item.tm-dragging {
-                opacity: 0.4; background: #94a3b8; border: 1px dashed #475569;
+                opacity: 0.4;
+                background: #94a3b8; border: 1px dashed #475569;
             }
             .tm-tab-close {
-                margin-left: 8px; font-size: 10px; color: #94a3b8; border-radius: 50%;
+                margin-left: 8px;
+                font-size: 10px; color: #94a3b8; border-radius: 50%;
                 width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
                 cursor: pointer;
             }
@@ -184,14 +265,17 @@
             .tm-iframe-view { width: 100%; height: 100%; border: none; }
 
             .tm-tab-placeholder {
-                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
                 background: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 500;
-                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+                display: flex; flex-direction: column;
+                align-items: center; justify-content: center; gap: 10px;
                 z-index: 5;
             }
 
             #tm-placeholder {
-                position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                position: absolute;
+                top: 50%; left: 50%; transform: translate(-50%, -50%);
                 color: #94a3b8; text-align: center; font-size: 13px; font-weight: 500;
             }
         `;
@@ -266,7 +350,6 @@
           if (e.target.classList.contains('tm-tab-close')) return;
           this.setActiveTab(id);
         };
-
         tabItem.addEventListener('dragstart', () => tabItem.classList.add('tm-dragging'));
         tabItem.addEventListener('dragend', () => tabItem.classList.remove('tm-dragging'));
         tabBar.appendChild(tabItem);
@@ -300,7 +383,6 @@
 
           const iframe = document.getElementById(`frame-${tab.id}`);
           const placeholder = document.getElementById(`placeholder-${tab.id}`);
-
           if (iframe) {
             if (placeholder) {
               placeholder.innerHTML = `<div style="font-size: 16px;">🔄</div><div>Consultando datos en servidor corporativo...</div>`;
@@ -350,7 +432,7 @@
       },
     };
 
-    // Escuchadores Drag & Drop Nativo Horizontal
+    // Escuchadores Drag & Drop Nativo Horizontal para Pestañas
     const tabBar = document.getElementById('tm-tab-bar');
     tabBar.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -377,7 +459,7 @@
     });
 
     // =========================================================================
-    // 4. ACCIONES DE LA TOOLBAR DEL POPUP (Mapeador de XML a CSV Descargable Nativo)
+    // 4. ACCIONES DE LA TOOLBAR DEL POPUP
     // =========================================================================
     document.getElementById('tm-refresh-current').onclick = () => {
       const currentId = window.customTabManager.activeTabId;
@@ -386,7 +468,6 @@
       const tab = window.customTabManager.tabs.find((t) => t.id === currentId);
       const frame = document.getElementById(`frame-${currentId}`);
       const placeholder = document.getElementById(`placeholder-${currentId}`);
-
       if (tab && frame) {
         if (placeholder) {
           placeholder.style.display = 'flex';
@@ -399,7 +480,6 @@
       }
     };
 
-    // MEJORA: Descargador asíncrono secuencial con mapeo XML a Blob para forzar ventana de Windows
     document.getElementById('tm-download-csv-all').onclick = async () => {
       if (window.customTabManager.tabs.length === 0) {
         alert('No hay contextos cargados en el visor para procesar descargas.');
@@ -411,7 +491,6 @@
       downloadBtn.disabled = true;
       downloadBtn.innerText = '⏳ Descargando...';
 
-      // Recorrer las pestañas secuencialmente con un bucle asíncrono puro para respetar el IIS de Abanca
       for (let i = 0; i < window.customTabManager.tabs.length; i++) {
         const tab = window.customTabManager.tabs[i];
         let itId = null;
@@ -430,25 +509,20 @@
             const serviceType = tab.type || 'CX';
             const csvUrl = `http://exaplicaciones/RPOS401/DataService${serviceType}.asmx/GenerarCSV?codigoItem=${itId}`;
 
-            // Hacer la petición asíncrona en segundo plano
             const response = await fetch(csvUrl);
             const xmlText = await response.text();
 
-            // Parsear el árbol XML de respuesta
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
             const csvContent = xmlDoc.getElementsByTagName('string')[0]?.textContent || '';
-
             if (csvContent.trim()) {
-              // Crear un Blob de texto plano con juego de caracteres UTF-8
               const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8;'});
               const link = document.createElement('a');
               link.href = URL.createObjectURL(blob);
-              link.download = `${tab.title}.csv`; // Asignar el nombre exacto de la pestaña
+              link.download = `${tab.title}.csv`;
               link.style.display = 'none';
-
               document.body.appendChild(link);
-              link.click(); // Disparar diálogo nativo de Windows (Guardar como / Sobrescribir)
+              link.click();
 
               document.body.removeChild(link);
               URL.revokeObjectURL(link.href);
@@ -456,8 +530,6 @@
           } catch (err) {
             console.error(`Error procesando descarga binaria para ${tab.title}:`, err);
           }
-
-          // Pequeña tregua de 300ms entre descargas para no encabalgar peticiones en el pool
           await new Promise((resolve) => setTimeout(resolve, 300));
         }
       }
@@ -475,71 +547,17 @@
     });
 
     // =========================================================================
-    // 5. ENRUTADOR DRAG & DROP Y ACCIÓN CLICK EN TEXTO "CONTROLES"
+    // 5. ENRUTADOR DRAG & DROP Y ACCIÓN CLICK EN TEXTO "CONTROLES" (REFACTORIZADO)
     // =========================================================================
-    let isBtnDragging = false,
-      btnDragHasMoved = false,
-      btnOffsetX,
-      btnOffsetY;
-    let isPanelDragging = false,
-      panelOffsetX,
-      panelOffsetY;
+    const posDefectoBtn = {bottom: '30px', right: '30px', top: 'auto', left: 'auto'};
+    const posDefectoPanel = {top: '40px', right: '40px', bottom: 'auto', left: 'auto'};
 
-    floatBtn.addEventListener('mousedown', (e) => {
-      if (e.target.classList.contains('tm-floating-subbtn')) return;
-      isBtnDragging = true;
-      btnDragHasMoved = false;
-      const rect = floatBtn.getBoundingClientRect();
-      btnOffsetX = e.clientX - rect.left;
-      btnOffsetY = e.clientY - rect.top;
-      floatBtn.style.bottom = 'auto';
-      floatBtn.style.right = 'auto';
-      floatBtn.style.left = rect.left + 'px';
-      floatBtn.style.top = rect.top + 'px';
-    });
-
-    document.getElementById('tm-header').addEventListener('mousedown', (e) => {
-      if (e.target.id === 'tm-close' || e.target.id === 'tm-close-all' || e.target.classList.contains('tm-panel-btn')) return;
-      isPanelDragging = true;
-      const rect = panel.getBoundingClientRect();
-      panelOffsetX = e.clientX - rect.left;
-      panelOffsetY = e.clientY - rect.top;
-      panel.style.right = 'auto';
-      panel.style.left = rect.left + 'px';
-      panel.style.top = rect.top + 'px';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-      if (isBtnDragging) {
-        btnDragHasMoved = true;
-        let newX = Math.max(0, Math.min(e.clientX - btnOffsetX, window.innerWidth - floatBtn.offsetWidth));
-        let newY = Math.max(0, Math.min(e.clientY - btnOffsetY, window.innerHeight - floatBtn.offsetHeight));
-        floatBtn.style.left = newX + 'px';
-        floatBtn.style.top = newY + 'px';
-      }
-      if (isPanelDragging) {
-        let newX = Math.max(0, Math.min(e.clientX - panelOffsetX, window.innerWidth - panel.offsetWidth));
-        let newY = Math.max(0, Math.min(e.clientY - panelOffsetY, window.innerHeight - panel.offsetHeight));
-        panel.style.left = newX + 'px';
-        panel.style.top = newY + 'px';
-      }
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isBtnDragging) {
-        isBtnDragging = false;
-        if (btnDragHasMoved) {
-          localStorage.setItem(CONFIG.BTN_POS_KEY, JSON.stringify({left: floatBtn.style.left, top: floatBtn.style.top}));
-        }
-      }
-      if (isPanelDragging) {
-        isPanelDragging = false;
-        localStorage.setItem(CONFIG.PANEL_POS_KEY, JSON.stringify({left: panel.style.left, top: panel.style.top}));
-      }
-    });
+    GestorUI.configurarArrastre(floatBtn, floatBtn, CONFIG.BTN_POS_KEY, true, posDefectoBtn);
+    GestorUI.configurarArrastre(panel, document.getElementById('tm-header'), CONFIG.PANEL_POS_KEY, false, posDefectoPanel);
 
     floatBtn.addEventListener('click', (e) => {
-      if (btnDragHasMoved) {
+      if (floatBtn.dataset.dragged === 'true') {
+        floatBtn.dataset.dragged = 'false';
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -555,35 +573,19 @@
     });
 
     document.getElementById('tm-btn-inject').addEventListener('click', (e) => {
-      if (btnDragHasMoved) return;
+      if (floatBtn.dataset.dragged === 'true') return;
       e.stopPropagation();
       ejecutarInyeccionTransversal();
     });
 
     document.getElementById('tm-btn-remove').addEventListener('click', (e) => {
-      if (btnDragHasMoved) return;
+      if (floatBtn.dataset.dragged === 'true') return;
       e.stopPropagation();
       ejecutarEliminacionTransversal();
     });
 
-    // Restauración persistente de geometrías e historial tras F5
-    (function restaurarEstadoLocal() {
-      const posBtn = localStorage.getItem(CONFIG.BTN_POS_KEY);
-      if (posBtn) {
-        const p = JSON.parse(posBtn);
-        floatBtn.style.left = p.left;
-        floatBtn.style.top = p.top;
-      } else {
-        floatBtn.style.bottom = '30px';
-        floatBtn.style.right = '30px';
-      }
-      const posPanel = localStorage.getItem(CONFIG.PANEL_POS_KEY);
-      if (posPanel) {
-        const p = JSON.parse(posPanel);
-        panel.style.left = p.left;
-        panel.style.top = p.top;
-      }
-
+    // Restauración persistente de historial de pestañas tras F5
+    (function restaurarPestanas() {
       const storedTabs = localStorage.getItem(CONFIG.TABS_STATE_KEY);
       if (storedTabs) {
         try {
@@ -600,11 +602,10 @@
   }
 
   // =========================================================================
-  // 6. MOTOR DE INYECCIÓN DE CONTROLES EXCLUSIVO (CON COMPROBACIÓN DE REGLA)
+  // 6. MOTOR DE INYECCIÓN DE CONTROLES EXCLUSIVO
   // =========================================================================
   function ejecutarInyeccionTransversal() {
     let inyectadosCount = 0;
-
     const frmAbajo = document.getElementById('ctl00_contentabajo_frmabajo') || document.getElementsByName('frmabajo')[0];
     if (!frmAbajo) return;
 
@@ -615,7 +616,6 @@
 
     function escanearArbolDocumentos(doc) {
       if (!doc) return;
-
       const checkboxes = doc.querySelectorAll('input[id*="chkboxUno"], input[name*="chkboxUno"]');
 
       checkboxes.forEach((chk) => {
@@ -661,7 +661,6 @@
         }
 
         const urlCamposFinal = `http://exaplicaciones/RPOS401/RPOS401M_Campos${pageType}.aspx?It=${itId}`;
-
         const parentTd = chk.parentElement;
         const wrapper = doc.createElement('span');
         wrapper.className = 'tm-ctx-wrapper';
@@ -740,7 +739,6 @@
         w.remove();
         eliminadosCount++;
       });
-
       const checkboxes = doc.querySelectorAll('input[data-tm-controlled]');
       checkboxes.forEach((chk) => chk.removeAttribute('data-tm-controlled'));
 
