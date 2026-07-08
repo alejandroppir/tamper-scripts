@@ -2,7 +2,7 @@
 // @name         ARIA (Asistente de Reviews IA)
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.1.1
+// @version      1.1.2
 // @description  Herramienta unificada ARIA en GitLab.
 // @match        https://gitlab.abanca.io/*/-/merge_requests/*
 // @grant        GM_addStyle
@@ -178,6 +178,9 @@
 
         #tm-gl-resizer { position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; cursor: se-resize; background: linear-gradient(135deg, transparent 50%, #555555 50%); border-bottom-right-radius: 12px; z-index: 100; }
         .tm-gl-status-text { font-size: 12px; font-weight: 600; text-align: center; margin-top: 4px; }
+
+        #tm-gl-mr-counter { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border-radius: 4px; font-weight: 700; font-size: 13px; color: white; background: #376466; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); margin-right: 8px; transition: background 0.3s; }
+
         a { color: #3794ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .tm-is-dragging iframe { pointer-events: none !important; }
@@ -837,6 +840,67 @@
     document.getElementById('tm-gl-close').addEventListener('click', () => {
       panel.style.display = 'none';
     });
+
+    // ==========================================
+    // TRACKER AUTOMÁTICO DE FICHEROS
+    // ==========================================
+    async function initTracker() {
+      const pathParts = window.location.pathname.split('/-/merge_requests/');
+      if (pathParts.length !== 2) return;
+
+      const pathPrefix = pathParts[0];
+      const mrIid = pathParts[1].split('/')[0];
+      const lsKey = `code-review-${pathPrefix}/-/merge_requests/${mrIid}`;
+      const apiUrl = `${window.location.origin}${pathPrefix}/-/merge_requests/${mrIid}/diffs_metadata.json?diff_head=true`;
+
+      let totalFiles = 0;
+
+      try {
+        const response = await fetch(apiUrl);
+        if (response.ok) {
+          const data = await response.json();
+          totalFiles = parseInt(data.real_size, 10) || data.size || 0;
+        }
+      } catch (e) {
+        console.error('ARIA Tracker: Error cargando total de ficheros', e);
+      }
+
+      function updateBadge() {
+        let reviewedCount = 0;
+        const lsData = localStorage.getItem(lsKey);
+
+        if (lsData) {
+          try {
+            const parsed = JSON.parse(lsData);
+            if (Array.isArray(parsed)) reviewedCount = parsed.length;
+          } catch (e) {}
+        }
+
+        let counterBadge = document.getElementById('tm-gl-mr-counter');
+        if (!counterBadge) {
+          const targetContainer = document.querySelector('[data-testid="review-drawer-toggle"]');
+          if (targetContainer && targetContainer.parentNode) {
+            counterBadge = document.createElement('div');
+            counterBadge.id = 'tm-gl-mr-counter';
+            targetContainer.parentNode.insertBefore(counterBadge, targetContainer);
+          }
+        }
+
+        if (counterBadge) {
+          counterBadge.innerHTML = `✅ ${reviewedCount} / ${totalFiles}`;
+          if (totalFiles > 0 && reviewedCount >= totalFiles) {
+            counterBadge.style.background = '#10b981';
+          } else {
+            counterBadge.style.background = COLOR_ABANCA;
+          }
+        }
+      }
+
+      updateBadge();
+      setInterval(updateBadge, 1000);
+    }
+
+    initTracker();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUI);
