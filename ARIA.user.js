@@ -2,7 +2,7 @@
 // @name         ARIA (Asistente de Reviews IA)
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.1.2
+// @version      1.1.3
 // @description  Herramienta unificada ARIA en GitLab.
 // @match        https://gitlab.abanca.io/*/-/merge_requests/*
 // @grant        GM_addStyle
@@ -179,7 +179,13 @@
         #tm-gl-resizer { position: absolute; bottom: 0; right: 0; width: 18px; height: 18px; cursor: se-resize; background: linear-gradient(135deg, transparent 50%, #555555 50%); border-bottom-right-radius: 12px; z-index: 100; }
         .tm-gl-status-text { font-size: 12px; font-weight: 600; text-align: center; margin-top: 4px; }
 
-        #tm-gl-mr-counter { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border-radius: 4px; font-weight: 700; font-size: 13px; color: white; background: #376466; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); margin-right: 8px; transition: background 0.3s; }
+        /* ESTILOS DEL TRACKER Y BOTÓN DE REFRESCAR */
+        #tm-gl-mr-wrapper { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; }
+        #tm-gl-mr-counter { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 12px; border-radius: 4px; font-weight: 700; font-size: 13px; color: white; background: ${COLOR_ABANCA}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); transition: background 0.3s; }
+        #tm-gl-mr-refresh { display: inline-flex; align-items: center; justify-content: center; height: 32px; width: 32px; border-radius: 4px; background: #2d2d2d; color: white; border: 1px solid #3c3c3c; cursor: pointer; font-size: 13px; transition: all 0.2s; user-select: none; }
+        #tm-gl-mr-refresh:hover { background: #3c3c3c; border-color: ${COLOR_ABANCA}; }
+        #tm-gl-mr-refresh.spin { animation: tm-spin-anim 0.6s ease-in-out; }
+        @keyframes tm-spin-anim { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         a { color: #3794ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
@@ -845,27 +851,125 @@
     // TRACKER AUTOMÁTICO DE FICHEROS
     // ==========================================
     async function initTracker() {
-      const pathParts = window.location.pathname.split('/-/merge_requests/');
-      if (pathParts.length !== 2) return;
-
-      const pathPrefix = pathParts[0];
-      const mrIid = pathParts[1].split('/')[0];
-      const lsKey = `code-review-${pathPrefix}/-/merge_requests/${mrIid}`;
-      const apiUrl = `${window.location.origin}${pathPrefix}/-/merge_requests/${mrIid}/diffs_metadata.json?diff_head=true`;
-
       let totalFiles = 0;
 
-      try {
-        const response = await fetch(apiUrl);
-        if (response.ok) {
-          const data = await response.json();
-          totalFiles = parseInt(data.real_size, 10) || data.size || 0;
+      function ensureUIElements() {
+        let wrapper = document.getElementById('tm-gl-mr-wrapper');
+        if (!wrapper) {
+          const targetContainer = document.querySelector('[data-testid="review-drawer-toggle"]');
+          if (targetContainer && targetContainer.parentNode) {
+            wrapper = document.createElement('div');
+            wrapper.id = 'tm-gl-mr-wrapper';
+
+            const counterBadge = document.createElement('div');
+            counterBadge.id = 'tm-gl-mr-counter';
+
+            const refreshBtn = document.createElement('button');
+            refreshBtn.id = 'tm-gl-mr-refresh';
+            refreshBtn.type = 'button';
+            refreshBtn.title = 'Recalcular ficheros y purgar obsoletos del LocalStorage';
+            refreshBtn.innerHTML = '🔄';
+
+            // SOLO al hacer clic en este botón se limpia el LocalStorage
+            refreshBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              recalculateAndPurge();
+            });
+
+            wrapper.appendChild(counterBadge);
+            wrapper.appendChild(refreshBtn);
+
+            targetContainer.parentNode.insertBefore(wrapper, targetContainer);
+          }
         }
-      } catch (e) {
-        console.error('ARIA Tracker: Error cargando total de ficheros', e);
+      }
+
+      // Carga inicial pasiva: NO purga ni toca el LocalStorage
+      async function loadInitialState() {
+        ensureUIElements();
+        const pathParts = window.location.pathname.split('/-/merge_requests/');
+        if (pathParts.length !== 2) return;
+
+        const pathPrefix = pathParts[0];
+        const mrIid = pathParts[1].split('/')[0];
+        const apiUrl = `${window.location.origin}${pathPrefix}/-/merge_requests/${mrIid}/diffs_metadata.json?diff_head=true`;
+
+        try {
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const data = await response.json();
+            totalFiles = parseInt(data.real_size, 10) || data.size || 0;
+          }
+        } catch (e) {
+          console.error('ARIA Tracker: Error cargando total de ficheros', e);
+        }
+
+        updateBadge();
+      }
+
+      // Función explícita de purga: solo se ejecuta por clic de usuario
+      async function recalculateAndPurge() {
+        const refreshBtn = document.getElementById('tm-gl-mr-refresh');
+        if (refreshBtn) {
+          refreshBtn.classList.add('spin');
+          setTimeout(() => refreshBtn.classList.remove('spin'), 600);
+        }
+
+        const pathParts = window.location.pathname.split('/-/merge_requests/');
+        if (pathParts.length !== 2) return;
+
+        const pathPrefix = pathParts[0];
+        const mrIid = pathParts[1].split('/')[0];
+        const lsKey = `code-review-${pathPrefix}/-/merge_requests/${mrIid}`;
+        const apiUrl = `${window.location.origin}${pathPrefix}/-/merge_requests/${mrIid}/diffs_metadata.json?diff_head=true`;
+
+        try {
+          const response = await fetch(apiUrl);
+          if (response.ok) {
+            const data = await response.json();
+            totalFiles = parseInt(data.real_size, 10) || data.size || 0;
+
+            const validIdentifiers = new Set();
+            if (Array.isArray(data.diff_files)) {
+              data.diff_files.forEach((file) => {
+                if (file.new_path) validIdentifiers.add(file.new_path);
+                if (file.old_path) validIdentifiers.add(file.old_path);
+                if (file.file_hash) validIdentifiers.add(file.file_hash);
+                if (file.file_identifier_hash) validIdentifiers.add(file.file_identifier_hash);
+                if (file.code_review_id) validIdentifiers.add(file.code_review_id);
+              });
+            }
+
+            const lsData = localStorage.getItem(lsKey);
+            if (lsData) {
+              try {
+                const parsed = JSON.parse(lsData);
+                if (Array.isArray(parsed) && validIdentifiers.size > 0) {
+                  // Purga real del localStorage
+                  const validReviewed = parsed.filter((id) => validIdentifiers.has(id));
+                  localStorage.setItem(lsKey, JSON.stringify(validReviewed));
+                }
+              } catch (e) {}
+            }
+          }
+        } catch (e) {
+          console.error('ARIA Tracker: Error recalculando y purgando', e);
+        }
+
+        updateBadge();
       }
 
       function updateBadge() {
+        ensureUIElements();
+
+        const pathParts = window.location.pathname.split('/-/merge_requests/');
+        if (pathParts.length !== 2) return;
+
+        const pathPrefix = pathParts[0];
+        const mrIid = pathParts[1].split('/')[0];
+        const lsKey = `code-review-${pathPrefix}/-/merge_requests/${mrIid}`;
+
         let reviewedCount = 0;
         const lsData = localStorage.getItem(lsKey);
 
@@ -876,16 +980,7 @@
           } catch (e) {}
         }
 
-        let counterBadge = document.getElementById('tm-gl-mr-counter');
-        if (!counterBadge) {
-          const targetContainer = document.querySelector('[data-testid="review-drawer-toggle"]');
-          if (targetContainer && targetContainer.parentNode) {
-            counterBadge = document.createElement('div');
-            counterBadge.id = 'tm-gl-mr-counter';
-            targetContainer.parentNode.insertBefore(counterBadge, targetContainer);
-          }
-        }
-
+        const counterBadge = document.getElementById('tm-gl-mr-counter');
         if (counterBadge) {
           counterBadge.innerHTML = `✅ ${reviewedCount} / ${totalFiles}`;
           if (totalFiles > 0 && reviewedCount >= totalFiles) {
@@ -896,7 +991,7 @@
         }
       }
 
-      updateBadge();
+      await loadInitialState();
       setInterval(updateBadge, 1000);
     }
 
