@@ -7,7 +7,7 @@ Imputador masivo - https://raw.githubusercontent.com/alejandroppir/tamper-script
 Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/extractor-tareas.user.js
 Creador parametros - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
 Consola fecha fin - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/consola-fecha-fin.user.js  
-Cambiar entorno ES-PT - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/switch-pma.user.js
+BGUR dev utils - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/bgur-dev-utils.user.js
 
 # Configuración
 
