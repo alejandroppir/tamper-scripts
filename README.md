@@ -8,6 +8,7 @@ Extractor tareas - https://raw.githubusercontent.com/alejandroppir/tamper-script
 Creador parametros - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/creador-parametros.user.js
 Consola fecha fin - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/consola-fecha-fin.user.js  
 BGUR dev utils - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/bgur-dev-utils.user.js
+Gitlab Tag Version - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/gitlab-tag-version.user.js
 
 # Configuración
 
