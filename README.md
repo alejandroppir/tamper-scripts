@@ -9,6 +9,8 @@ Creador parametros - https://raw.githubusercontent.com/alejandroppir/tamper-scri
 Consola fecha fin - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/consola-fecha-fin.user.js  
 BGUR dev utils - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/bgur-dev-utils.user.js
 Gitlab Tag Version - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/gitlab-tag-version.user.js
+Cache Refresh - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/cache-refresh.user.js
+CGDN tools - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/CGDN-tools.user.js
 
 # Configuración
 
