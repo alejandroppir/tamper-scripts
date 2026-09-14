@@ -2,7 +2,7 @@
 // @name         ARIA (Asistente de Reviews IA)
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.1.3
+// @version      1.1.5
 // @description  Herramienta unificada ARIA en GitLab.
 // @match        https://gitlab.abanca.io/*/-/merge_requests/*
 // @grant        GM_addStyle
@@ -190,7 +190,7 @@
         a { color: #3794ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .tm-is-dragging iframe { pointer-events: none !important; }
-    `);
+  `);
 
   let suggestions = [];
   let filteredSuggestions = [];
@@ -730,20 +730,116 @@
       if (item.state === 'ignored') btnIgnored.classList.add('active');
     }
 
-    pathDiv.addEventListener('click', () => {
-      if (filteredSuggestions.length === 0) return;
+    pathDiv.addEventListener('click', async () => {
+      console.log('🚀 [ARIA] Click en ruta de fichero iniciado.');
+
+      if (filteredSuggestions.length === 0) {
+        console.warn('⚠️ [ARIA] No hay sugerencias filtradas en la lista.');
+        return;
+      }
+
       const item = filteredSuggestions[currentIndex];
+      const fileName = item.filePath.split('/').pop();
+      console.log(`📁 [ARIA] Objetivo: "${item.filePath}" | Nombre corto: "${fileName}" | Línea: ${item.line || 'N/A'}`);
+
+      // 1. Escribir en el buscador
+      const searchInput = document.getElementById('diff-tree-search') || document.querySelector('[data-testid="diff-tree-search"]');
+      if (searchInput) {
+        console.log('🔍 [ARIA] Campo #diff-tree-search localizado. Insertando texto...');
+        searchInput.focus();
+
+        try {
+          const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          nativeSetter.call(searchInput, fileName);
+        } catch (err) {
+          console.error('❌ [ARIA] Error al aplicar setter nativo:', err);
+          searchInput.value = fileName;
+        }
+
+        searchInput.dispatchEvent(
+          new InputEvent('input', {bubbles: true, cancelable: true, composed: true, inputType: 'insertText', data: fileName}),
+        );
+        searchInput.dispatchEvent(new Event('change', {bubbles: true}));
+        searchInput.dispatchEvent(new KeyboardEvent('keyup', {bubbles: true, key: 'a'}));
+        console.log('✅ [ARIA] Eventos de input/change/keyup enviados al buscador.');
+      } else {
+        console.warn('⚠️ [ARIA] No se encontró el elemento #diff-tree-search en el DOM.');
+      }
+
+      // 2. Polling para localizar el fichero en el árbol lateral
+      console.log('⏳ [ARIA] Iniciando polling (2s máx) para detectar el fichero en el árbol lateral...');
+      let fileBtn = null;
+      const startTime = Date.now();
+      let attempts = 0;
+
+      while (Date.now() - startTime < 2000) {
+        attempts++;
+        const candidates = Array.from(document.querySelectorAll('[data-testid="file-row"], .file-row, [data-file-row], [data-qa-file-name]'));
+
+        fileBtn = candidates.find((el) => {
+          const txt = el.textContent || '';
+          const aria = el.getAttribute('aria-label') || '';
+          const qa = el.getAttribute('data-qa-file-name') || '';
+          return txt.includes(fileName) || aria.includes(fileName) || qa.includes(fileName) || txt.includes(item.filePath);
+        });
+
+        if (fileBtn) {
+          console.log(`🎯 [ARIA] Elemento encontrado en el árbol en el intento #${attempts}:`, fileBtn);
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 100));
+      }
+
+      if (!fileBtn) {
+        console.error('❌ [ARIA] No se encontró ningún elemento en el árbol tras 2 segundos.');
+        console.log(
+          '🔎 [ARIA] Elementos con selector file-row presentes en DOM actualmente:',
+          document.querySelectorAll('[data-testid="file-row"], .file-row, [data-file-row]'),
+        );
+      } else {
+        const targetClickable = fileBtn.closest('button') || fileBtn.closest('[data-file-row]') || fileBtn;
+        console.log('👆 [ARIA] Disparando interacción sobre el nodo:', targetClickable);
+
+        // A. Eventos de Teclado (sin propiedad view)
+        targetClickable.focus();
+        ['keydown', 'keyup'].forEach((type) => {
+          targetClickable.dispatchEvent(new KeyboardEvent(type, {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true}));
+        });
+        console.log('⌨️ [ARIA] Eventos Keydown/Keyup Enter disparados.');
+
+        // B. Mouse Events (sin propiedad view para evitar TypeError en el Sandbox de Tampermonkey)
+        ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach((evt) => {
+          targetClickable.dispatchEvent(new MouseEvent(evt, {bubbles: true, cancelable: true}));
+        });
+        console.log('🖱️ [ARIA] Secuencia de eventos de ratón disparada.');
+
+        // C. Hash de navegación
+        const fileHash = targetClickable.getAttribute('data-file-row') || targetClickable.closest('[data-file-row]')?.getAttribute('data-file-row');
+        if (fileHash) {
+          console.log(`🔗 [ARIA] Aplicando hash a la URL: #${fileHash}`);
+          window.location.hash = fileHash;
+        } else {
+          console.warn('⚠️ [ARIA] No se encontró atributo data-file-row para cambiar el hash.');
+        }
+
+        await new Promise((r) => setTimeout(r, 500));
+      }
+
+      // 3. Localizar el fichero en la vista central (Diff Viewer)
+      console.log('📜 [ARIA] Buscando el fichero en la vista principal...');
       let targetEl =
         document.querySelector(`[data-blob-diff-path*="${item.filePath}"]`) || document.querySelector(`[data-page-path*="${item.filePath}"]`);
 
       if (!targetEl) {
-        const selectors = ['.file-title-name', '.diff-file .file-header', '.file-header', '.file-name'];
+        console.log('🔍 [ARIA] Probando selectores alternativos en el DOM principal...');
+        const selectors = ['.file-title-name', '.diff-file .file-header', '.file-header', '.file-name', '.file-title'];
         for (const selector of selectors) {
           const elements = document.querySelectorAll(selector);
           for (let el of elements) {
             const cleanDomText = el.textContent.trim();
-            if (cleanDomText && (cleanDomText.includes(item.filePath) || item.filePath.includes(cleanDomText))) {
+            if (cleanDomText && (cleanDomText.includes(item.filePath) || item.filePath.includes(cleanDomText) || cleanDomText.includes(fileName))) {
               targetEl = el;
+              console.log(`✅ [ARIA] Encontrado mediante selector "${selector}":`, el);
               break;
             }
           }
@@ -751,7 +847,24 @@
         }
       }
 
-      if (targetEl) targetEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+      if (targetEl) {
+        console.log('🎯 [ARIA] Nodo de archivo principal encontrado:', targetEl);
+        if (item.line) {
+          console.log(`🔢 [ARIA] Buscando nodo de línea ${item.line}...`);
+          const fileContainer = targetEl.closest('.diff-file, .file-holder') || document;
+          const lineEl = fileContainer.querySelector(`[data-line-number="${item.line}"], [data-new-line="${item.line}"], #L${item.line}`);
+          if (lineEl) {
+            console.log('📍 [ARIA] Línea encontrada. Realizando scroll smooth...', lineEl);
+            lineEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return;
+          } else {
+            console.warn(`⚠️ [ARIA] No se encontró la línea ${item.line} en el DOM. Haciendo scroll al inicio del archivo.`);
+          }
+        }
+        targetEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+      } else {
+        console.error('❌ [ARIA] No se encontró el archivo en la vista principal para hacer scroll.');
+      }
     });
 
     function updateState(newState) {
