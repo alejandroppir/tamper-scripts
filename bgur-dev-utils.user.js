@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Abanca: Dev Utils (Switcher & Error Manager)
+// @name         Abanca: Dev Utils (Switcher, Error Manager & Localhost)
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.2.0
-// @description  Bubble Menu flotante adaptativo con cambio ES/PT y gestor de errores CDK.
+// @version      1.5.0
+// @description  Bubble Menu flotante adaptativo con cambio ES/PT, gestor de errores CDK y apertura bidireccional Remoto <-> Localhost.
 // @match        *://tcaplicaciones.abanca.com/*
 // @match        *://tpaplicaciones.abanca.com/*
 // @match        *://tcaplicaciones/*
@@ -21,6 +21,7 @@
     COLOR_PRIMARIO: '#276466',
     COLOR_SECUNDARIO: '#1e4f51',
     BTN_POS_KEY: 'tm_devutils_btn_pos',
+    APP_CODE_KEY: 'tm_devutils_last_appcode',
   };
 
   // =========================================================================
@@ -63,8 +64,6 @@
 
         e.preventDefault();
         document.body.classList.add('tm-is-dragging');
-
-        // Cerrar menú al iniciar arrastre
         elemento.classList.remove('open');
 
         arrastrando = true;
@@ -90,9 +89,7 @@
       document.addEventListener('mouseup', () => {
         if (!arrastrando) return;
         arrastrando = false;
-
         document.body.classList.remove('tm-is-dragging');
-
         if (seMovio) {
           if (esBoton) elemento.dataset.dragged = 'true';
           localStorage.setItem(claveStorage, JSON.stringify({left: elemento.style.left, top: elemento.style.top}));
@@ -119,6 +116,84 @@
 
     if (newUrl !== currentUrl) {
       window.location.href = newUrl;
+    }
+  }
+
+  function abrirLocalhost(nuevaPestana) {
+    const currentUrl = window.location.href;
+
+    const regex = /^https?:\/\/(tc|tp)aplicaciones(?:[^\/]*)\/([A-Z0-9]+)\/(?:es-ES|pt-PT)\/(.*)$/i;
+    const match = currentUrl.match(regex);
+
+    if (!match) {
+      alert('Esta URL no parece tener el formato estándar para abrir en localhost (requiere entorno, app e idioma).');
+      return;
+    }
+
+    const env = match[1].toLowerCase(); // 'tc' o 'tp'
+    const appCode = match[2]; // 'BGURAA0007'
+    const route = match[3]; // '#/policy/14234194'
+
+    // Guardamos el código de la app para cuando queramos hacer la vuelta inversa
+    localStorage.setItem(CONFIG.APP_CODE_KEY, appCode);
+
+    const basePrefix = env === 'tp' ? '5' : '4';
+    const last3 = appCode.slice(-3);
+
+    let port;
+    if (last3.charAt(0) === '0') {
+      port = basePrefix + '3' + last3.substring(1); // 007 -> 307
+    } else {
+      port = basePrefix + last3; // 101 -> 101
+    }
+
+    const localhostUrl = `http://localhost:${port}/${route}`;
+
+    if (nuevaPestana) {
+      window.open(localhostUrl, '_blank');
+    } else {
+      window.location.href = localhostUrl;
+    }
+  }
+
+  function abrirRemoto(nuevaPestana) {
+    const currentUrl = window.location.href;
+    const regex = /^https?:\/\/localhost:(\d+)\/(.*)$/i;
+    const match = currentUrl.match(regex);
+
+    if (!match) {
+      alert('No se pudo identificar el puerto en la URL de localhost.');
+      return;
+    }
+
+    const port = match[1]; // ej: "4307" o "5101"
+    const route = match[2]; // ej: "#/policy/14234194"
+
+    const isPortugal = port.charAt(0) === '5';
+    const envSubdomain = isPortugal ? 'tpaplicaciones.abanca.com' : 'tcaplicaciones.abanca.com';
+    const lang = isPortugal ? 'pt-PT' : 'es-ES';
+
+    const portSuffix = port.substring(1); // ej: "307" o "101"
+    let appSuffix = '';
+
+    if (portSuffix.charAt(0) === '3') {
+      appSuffix = '0' + portSuffix.substring(1); // "307" -> "007"
+    } else {
+      appSuffix = portSuffix; // "101" -> "101"
+    }
+
+    // Recuperamos el appCode previo, si no, intentamos reconstruirlo (fallback)
+    let appCode = localStorage.getItem(CONFIG.APP_CODE_KEY);
+    if (!appCode || !appCode.endsWith(appSuffix)) {
+      appCode = 'BGURAA0' + appSuffix;
+    }
+
+    const remoteUrl = `https://${envSubdomain}/${appCode}/${lang}/${route}`;
+
+    if (nuevaPestana) {
+      window.open(remoteUrl, '_blank');
+    } else {
+      window.location.href = remoteUrl;
     }
   }
 
@@ -157,15 +232,18 @@
     if (document.getElementById('tm-devutils-wrapper')) return;
 
     const currentUrl = window.location.href;
+    const isLocalhost = window.location.hostname === 'localhost';
     const isSpain = currentUrl.includes('tcaplicaciones') || currentUrl.includes('/es-ES/');
     const isPortugal = currentUrl.includes('tpaplicaciones') || currentUrl.includes('/pt-PT/');
 
     const svgES = `<svg class="flag-icon" width="20" height="14" viewBox="0 0 750 500"><rect width="750" height="500" fill="#c60b1e"/><rect width="750" height="250" y="125" fill="#ffc400"/></svg>`;
     const svgPT = `<svg class="flag-icon" width="20" height="14" viewBox="0 0 600 400"><rect width="600" height="400" fill="#da291c"/><rect width="240" height="400" fill="#046a38"/></svg>`;
-
     const flowContent = isSpain ? `${svgES} <span class="arrow">&gt;</span> ${svgPT}` : `${svgPT} <span class="arrow">&gt;</span> ${svgES}`;
 
     const devIconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`;
+
+    const iconSameTab = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>`;
+    const iconNewTab = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
 
     const style = document.createElement('style');
     style.textContent = `
@@ -206,7 +284,7 @@
         border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.25);
         padding: 10px;
-        min-width: 220px;
+        min-width: 230px;
         gap: 6px;
         color: #333333;
         z-index: 10000000;
@@ -269,6 +347,11 @@
         color: #2d3748;
         transition: all 0.15s ease;
       }
+      .tm-submenu-btn.neutral-btn:hover {
+        background: #ebf8ff;
+        border-color: #90cdf4;
+        color: #2b6cb0;
+      }
       .tm-submenu-btn.hide-btn:hover {
         background: #fff5f5;
         border-color: #feb2b2;
@@ -289,13 +372,44 @@
     menu.id = 'tm-devutils-menu';
     menu.className = 'no-drag';
 
-    menu.innerHTML = `
-      <div class="tm-menu-section-title">Entorno</div>
-      <div class="tm-menu-item" id="tm-item-switch">
-        <span>Cambiar PMA</span>
-        <div style="display: flex; align-items: center;">${flowContent}</div>
-      </div>
+    let menuHTML = '';
 
+    // Si estamos en remoto mostramos el cambio de PMA y el salto a localhost
+    if (!isLocalhost) {
+      menuHTML += `
+        <div class="tm-menu-section-title">Entorno</div>
+        <div class="tm-menu-item" id="tm-item-switch">
+          <span>Cambiar PMA</span>
+          <div style="display: flex; align-items: center;">${flowContent}</div>
+        </div>
+
+        <div class="tm-menu-section-title">Abrir en Localhost</div>
+        <div class="tm-submenu-group">
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-same" title="Abrir en esta misma pestaña">
+            ${iconSameTab} Aquí
+          </button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-new" title="Abrir en una nueva pestaña">
+            ${iconNewTab} Nueva
+          </button>
+        </div>
+      `;
+    } else {
+      // Si estamos en localhost, mostramos la opción de regresar a remoto
+      menuHTML += `
+        <div class="tm-menu-section-title">Abrir en Remoto (PMA)</div>
+        <div class="tm-submenu-group">
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-same" title="Abrir en esta misma pestaña">
+            ${iconSameTab} Aquí
+          </button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-new" title="Abrir en una nueva pestaña">
+            ${iconNewTab} Nueva
+          </button>
+        </div>
+      `;
+    }
+
+    // Común: Ventanas de Error
+    menuHTML += `
       <div class="tm-menu-section-title">Ventanas de Error</div>
       <div class="tm-submenu-group">
         <button class="tm-submenu-btn hide-btn" id="tm-btn-hide-error">
@@ -309,6 +423,8 @@
       </div>
     `;
 
+    menu.innerHTML = menuHTML;
+
     const btn = document.createElement('div');
     btn.id = 'tm-devutils-btn';
     btn.innerHTML = devIconSvg;
@@ -320,28 +436,25 @@
 
     GestorUI.configurarArrastre(wrapper, btn, CONFIG.BTN_POS_KEY, true, {top: '30px', left: '30px', bottom: 'auto', right: 'auto'});
 
-    // Ajusta la dirección de apertura del menú según los límites de la pantalla
     function actualizarPosicionMenu() {
       const rect = wrapper.getBoundingClientRect();
       const midY = window.innerHeight / 2;
       const midX = window.innerWidth / 2;
 
-      // Orientación Vertical
       if (rect.top > midY) {
         menu.style.top = 'auto';
-        menu.style.bottom = '56px'; // Despliega hacia ARRIBA
+        menu.style.bottom = '56px';
       } else {
         menu.style.bottom = 'auto';
-        menu.style.top = '56px'; // Despliega hacia ABAJO
+        menu.style.top = '56px';
       }
 
-      // Orientación Horizontal
       if (rect.left > midX) {
         menu.style.left = 'auto';
-        menu.style.right = '0px'; // Alineado a la DERECHA del botón
+        menu.style.right = '0px';
       } else {
         menu.style.right = 'auto';
-        menu.style.left = '0px'; // Alineado a la IZQUIERDA del botón
+        menu.style.left = '0px';
       }
     }
 
@@ -366,9 +479,29 @@
       }
     });
 
-    document.getElementById('tm-item-switch').addEventListener('click', () => {
-      switchEnvironment();
-    });
+    // Listeners según entorno
+    if (!isLocalhost) {
+      document.getElementById('tm-item-switch').addEventListener('click', () => {
+        switchEnvironment();
+      });
+      document.getElementById('tm-btn-local-same').addEventListener('click', () => {
+        abrirLocalhost(false);
+        wrapper.classList.remove('open');
+      });
+      document.getElementById('tm-btn-local-new').addEventListener('click', () => {
+        abrirLocalhost(true);
+        wrapper.classList.remove('open');
+      });
+    } else {
+      document.getElementById('tm-btn-remote-same').addEventListener('click', () => {
+        abrirRemoto(false);
+        wrapper.classList.remove('open');
+      });
+      document.getElementById('tm-btn-remote-new').addEventListener('click', () => {
+        abrirRemoto(true);
+        wrapper.classList.remove('open');
+      });
+    }
 
     document.getElementById('tm-btn-hide-error').addEventListener('click', () => {
       ocultarError();
