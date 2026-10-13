@@ -11,6 +11,7 @@ BGUR dev utils - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/
 Gitlab Tag Version - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/gitlab-tag-version.user.js
 Cache Refresh - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/cache-refresh.user.js
 CGDN tools - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/CGDN-tools.user.js
+Aceptar login claude (hay que cambiar el mail) - https://raw.githubusercontent.com/alejandroppir/tamper-scripts/accept-morphe-claude-login.user.js
 
 # Configuración
 

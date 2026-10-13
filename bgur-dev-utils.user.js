@@ -2,12 +2,16 @@
 // @name         Abanca: Dev Utils (Switcher, Error Manager & Localhost)
 // @namespace    https://github.com/alejandroppir/tamper-scripts
 // @author       @alejandroppir
-// @version      1.5.0
-// @description  Bubble Menu flotante adaptativo con cambio ES/PT, gestor de errores CDK y apertura bidireccional Remoto <-> Localhost.
+// @version      1.9.0
+// @description  Bubble Menu flotante con soporte para tX/dX, gestor CDK, apertura bidireccional y favicons dinámicos de banderas con prefijo [T]/[D]/[L].
 // @match        *://tcaplicaciones.abanca.com/*
 // @match        *://tpaplicaciones.abanca.com/*
+// @match        *://dcaplicaciones.abanca.com/*
+// @match        *://dpaplicaciones.abanca.com/*
 // @match        *://tcaplicaciones/*
 // @match        *://tpaplicaciones/*
+// @match        *://dcaplicaciones/*
+// @match        *://dpaplicaciones/*
 // @match        *://localhost:*/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/alejandroppir/tamper-scripts/main/bgur-dev-utils.user.js
@@ -21,25 +25,88 @@
     COLOR_PRIMARIO: '#276466',
     COLOR_SECUNDARIO: '#1e4f51',
     BTN_POS_KEY: 'tm_devutils_btn_pos',
-    APP_CODE_KEY: 'tm_devutils_last_appcode',
+    APP_CODE_KEY: 'tm_devutils_last_appcode'
   };
+
+  // =========================================================================
+  // GESTOR DE IDENTIDAD (Títulos y Favicons)
+  // =========================================================================
+  function actualizarIdentidadPestana() {
+    const url = window.location.href;
+    let isSpain = false;
+    let isPortugal = false;
+    const isLocal = url.includes('localhost');
+    let prefix = '';
+
+    // Detectar entorno y país
+    if (isLocal) {
+      prefix = '[L] ';
+      const match = url.match(/localhost:(\d+)/);
+      if (match) {
+        if (match[1].startsWith('4')) isSpain = true;
+        if (match[1].startsWith('5')) isPortugal = true;
+      }
+    } else {
+      if (url.match(/\b[td]caplicaciones/i) || url.includes('/es-ES/')) isSpain = true;
+      if (url.match(/\b[td]paplicaciones/i) || url.includes('/pt-PT/')) isPortugal = true;
+
+      if (url.match(/\bd[cp]aplicaciones/i)) {
+        prefix = '[D] ';
+      } else if (url.match(/\bt[cp]aplicaciones/i)) {
+        prefix = '[T] ';
+      }
+    }
+
+    const svgES = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 500"><rect width="750" height="500" fill="#c60b1e"/><rect width="750" height="250" y="125" fill="#ffc400"/></svg>';
+    const svgPT = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400"><rect width="600" height="400" fill="#da291c"/><rect width="240" height="400" fill="#046a38"/></svg>';
+
+    const updateIdentity = () => {
+      // 1. Actualizar Título
+      if (prefix && !document.title.startsWith(prefix)) {
+        const cleanTitle = document.title.replace(/^\[(T\vert{}D\vert{}L)\]\s*/, '');
+        document.title = prefix + cleanTitle;
+      }
+
+      // 2. Actualizar Favicon
+      if (isSpain || isPortugal) {
+        const svg = isSpain ? svgES : svgPT;
+        const faviconUrl = 'data:image/svg+xml;base64,' + btoa(svg);
+
+        let link = document.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.head.appendChild(link);
+        }
+
+        if (link.href !== faviconUrl) {
+          link.href = faviconUrl;
+        }
+      }
+    };
+
+    updateIdentity();
+
+    // Observador para SPA
+    const titleEl = document.querySelector('title');
+    if (titleEl) {
+      const observer = new MutationObserver(() => updateIdentity());
+      observer.observe(titleEl, { childList: true });
+    }
+  }
 
   // =========================================================================
   // GESTOR UI UNIVERSAL (Arrastre y Límites)
   // =========================================================================
   const GestorUI = {
     configurarArrastre: function (elemento, zonaArrastre, claveStorage, esBoton = false, posDefecto = {top: '20px', left: '20px'}) {
-      let arrastrando = false,
-        seMovio = false,
-        offsetX,
-        offsetY;
+      let arrastrando = false, seMovio = false, offsetX, offsetY;
 
       const posGuardada = localStorage.getItem(claveStorage);
       if (posGuardada) {
         try {
           const p = JSON.parse(posGuardada);
-          const x = parseInt(p.left),
-            y = parseInt(p.top);
+          const x = parseInt(p.left), y = parseInt(p.top);
           if (x >= 0 && y >= 0 && x < window.innerWidth - 50 && y < window.innerHeight - 50) {
             elemento.style.left = p.left;
             elemento.style.top = p.top;
@@ -61,7 +128,6 @@
 
       zonaArrastre.addEventListener('mousedown', (e) => {
         if (e.target.closest('.no-drag') || ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'].includes(e.target.tagName)) return;
-
         e.preventDefault();
         document.body.classList.add('tm-is-dragging');
         elemento.classList.remove('open');
@@ -105,10 +171,10 @@
     const currentUrl = window.location.href;
     let newUrl = currentUrl;
 
-    if (currentUrl.includes('tcaplicaciones') || currentUrl.includes('/es-ES/')) {
-      newUrl = newUrl.replace('tcaplicaciones', 'tpaplicaciones').replace('/es-ES/', '/pt-PT/');
-    } else if (currentUrl.includes('tpaplicaciones') || currentUrl.includes('/pt-PT/')) {
-      newUrl = newUrl.replace('tpaplicaciones', 'tcaplicaciones').replace('/pt-PT/', '/es-ES/');
+    if (currentUrl.match(/\b([td])caplicaciones/i) || currentUrl.includes('/es-ES/')) {
+      newUrl = newUrl.replace(/\b([td])caplicaciones/i, '$1paplicaciones').replace('/es-ES/', '/pt-PT/');
+    } else if (currentUrl.match(/\b([td])paplicaciones/i) || currentUrl.includes('/pt-PT/')) {
+      newUrl = newUrl.replace(/\b([td])paplicaciones/i, '$1caplicaciones').replace('/pt-PT/', '/es-ES/');
     } else {
       alert('No se ha podido identificar el entorno actual en la URL.');
       return;
@@ -122,29 +188,29 @@
   function abrirLocalhost(nuevaPestana) {
     const currentUrl = window.location.href;
 
-    const regex = /^https?:\/\/(tc|tp)aplicaciones(?:[^\/]*)\/([A-Z0-9]+)\/(?:es-ES|pt-PT)\/(.*)$/i;
+    // Captura t/d, c/p y el código de la app
+    const regex = /^https?:\/\/([td])([cp])aplicaciones(?:[^\/]*)\/([A-Z0-9]+)\/(?:es-ES|pt-PT)\/(.*)$/i;
     const match = currentUrl.match(regex);
 
     if (!match) {
-      alert('Esta URL no parece tener el formato estándar para abrir en localhost (requiere entorno, app e idioma).');
+      alert('Esta URL no parece tener el formato estándar para abrir en localhost.');
       return;
     }
 
-    const env = match[1].toLowerCase(); // 'tc' o 'tp'
-    const appCode = match[2]; // 'BGURAA0007'
-    const route = match[3]; // '#/policy/14234194'
+    const country = match[2].toLowerCase(); // 'c' o 'p'
+    const appCode = match[3];
+    const route = match[4];
 
-    // Guardamos el código de la app para cuando queramos hacer la vuelta inversa
     localStorage.setItem(CONFIG.APP_CODE_KEY, appCode);
 
-    const basePrefix = env === 'tp' ? '5' : '4';
+    const basePrefix = country === 'p' ? '5' : '4';
     const last3 = appCode.slice(-3);
 
     let port;
     if (last3.charAt(0) === '0') {
-      port = basePrefix + '3' + last3.substring(1); // 007 -> 307
+      port = basePrefix + '3' + last3.substring(1);
     } else {
-      port = basePrefix + last3; // 101 -> 101
+      port = basePrefix + last3;
     }
 
     const localhostUrl = `http://localhost:${port}/${route}`;
@@ -166,23 +232,23 @@
       return;
     }
 
-    const port = match[1]; // ej: "4307" o "5101"
-    const route = match[2]; // ej: "#/policy/14234194"
+    const port = match[1];
+    const route = match[2];
 
     const isPortugal = port.charAt(0) === '5';
+    // Forzamos la vuelta siempre a 't' como solicitaste
     const envSubdomain = isPortugal ? 'tpaplicaciones.abanca.com' : 'tcaplicaciones.abanca.com';
     const lang = isPortugal ? 'pt-PT' : 'es-ES';
 
-    const portSuffix = port.substring(1); // ej: "307" o "101"
+    const portSuffix = port.substring(1);
     let appSuffix = '';
 
     if (portSuffix.charAt(0) === '3') {
-      appSuffix = '0' + portSuffix.substring(1); // "307" -> "007"
+      appSuffix = '0' + portSuffix.substring(1);
     } else {
-      appSuffix = portSuffix; // "101" -> "101"
+      appSuffix = portSuffix;
     }
 
-    // Recuperamos el appCode previo, si no, intentamos reconstruirlo (fallback)
     let appCode = localStorage.getItem(CONFIG.APP_CODE_KEY);
     if (!appCode || !appCode.endsWith(appSuffix)) {
       appCode = 'BGURAA0' + appSuffix;
@@ -231,137 +297,38 @@
   function initUI() {
     if (document.getElementById('tm-devutils-wrapper')) return;
 
+    actualizarIdentidadPestana();
+
     const currentUrl = window.location.href;
     const isLocalhost = window.location.hostname === 'localhost';
-    const isSpain = currentUrl.includes('tcaplicaciones') || currentUrl.includes('/es-ES/');
-    const isPortugal = currentUrl.includes('tpaplicaciones') || currentUrl.includes('/pt-PT/');
+    const isSpain = currentUrl.match(/\b[td]caplicaciones/i) || currentUrl.includes('/es-ES/') || (isLocalhost && currentUrl.match(/localhost:4\d+/));
 
     const svgES = `<svg class="flag-icon" width="20" height="14" viewBox="0 0 750 500"><rect width="750" height="500" fill="#c60b1e"/><rect width="750" height="250" y="125" fill="#ffc400"/></svg>`;
     const svgPT = `<svg class="flag-icon" width="20" height="14" viewBox="0 0 600 400"><rect width="600" height="400" fill="#da291c"/><rect width="240" height="400" fill="#046a38"/></svg>`;
     const flowContent = isSpain ? `${svgES} <span class="arrow">&gt;</span> ${svgPT}` : `${svgPT} <span class="arrow">&gt;</span> ${svgES}`;
 
     const devIconSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`;
-
     const iconSameTab = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>`;
     const iconNewTab = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
 
     const style = document.createElement('style');
     style.textContent = `
-      #tm-devutils-wrapper {
-        position: fixed;
-        z-index: 9999999;
-        width: 48px;
-        height: 48px;
-        font-family: system-ui, -apple-system, sans-serif;
-      }
-      #tm-devutils-btn {
-        width: 48px;
-        height: 48px;
-        background: ${CONFIG.COLOR_PRIMARIO};
-        color: #ffffff;
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-        user-select: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: background 0.2s ease, transform 0.1s ease;
-      }
-      #tm-devutils-btn:hover {
-        background: ${CONFIG.COLOR_SECUNDARIO};
-      }
-      #tm-devutils-btn:active {
-        transform: scale(0.95);
-      }
-      #tm-devutils-menu {
-        position: absolute;
-        display: none;
-        flex-direction: column;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-        padding: 10px;
-        min-width: 230px;
-        gap: 6px;
-        color: #333333;
-        z-index: 10000000;
-      }
-      #tm-devutils-wrapper.open #tm-devutils-menu {
-        display: flex;
-      }
-      .tm-menu-section-title {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #718096;
-        padding: 4px 6px 0 6px;
-        font-weight: 700;
-      }
-      .tm-menu-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 10px;
-        border-radius: 8px;
-        background: #f7fafc;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 600;
-        color: #2d3748;
-        border: 1px solid transparent;
-        transition: background 0.15s ease, border-color 0.15s ease;
-      }
-      .tm-menu-item:hover {
-        background: #eef4f4;
-        border-color: ${CONFIG.COLOR_PRIMARIO};
-      }
-      .tm-menu-item .flag-icon {
-        border-radius: 2px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      }
-      .tm-menu-item .arrow {
-        font-weight: 900;
-        margin: 0 4px;
-        opacity: 0.7;
-      }
-      .tm-submenu-group {
-        display: flex;
-        gap: 6px;
-      }
-      .tm-submenu-btn {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 8px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #2d3748;
-        transition: all 0.15s ease;
-      }
-      .tm-submenu-btn.neutral-btn:hover {
-        background: #ebf8ff;
-        border-color: #90cdf4;
-        color: #2b6cb0;
-      }
-      .tm-submenu-btn.hide-btn:hover {
-        background: #fff5f5;
-        border-color: #feb2b2;
-        color: #c53030;
-      }
-      .tm-submenu-btn.show-btn:hover {
-        background: #f0fff4;
-        border-color: #9ae6b4;
-        color: #276749;
-      }
+      #tm-devutils-wrapper { position: fixed; z-index: 9999999; width: 48px; height: 48px; font-family: system-ui, -apple-system, sans-serif; }
+      #tm-devutils-btn { width: 48px; height: 48px; background: ${CONFIG.COLOR_PRIMARIO}; color: #ffffff; border-radius: 50%; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,0.35); user-select: none; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.2); transition: background 0.2s ease, transform 0.1s ease; }
+      #tm-devutils-btn:hover { background: ${CONFIG.COLOR_SECUNDARIO}; }
+      #tm-devutils-btn:active { transform: scale(0.95); }
+      #tm-devutils-menu { position: absolute; display: none; flex-direction: column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.25); padding: 10px; min-width: 230px; gap: 6px; color: #333333; z-index: 10000000; }
+      #tm-devutils-wrapper.open #tm-devutils-menu { display: flex; }
+      .tm-menu-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #718096; padding: 4px 6px 0 6px; font-weight: 700; }
+      .tm-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: #f7fafc; cursor: pointer; font-size: 13px; font-weight: 600; color: #2d3748; border: 1px solid transparent; transition: background 0.15s ease, border-color 0.15s ease; }
+      .tm-menu-item:hover { background: #eef4f4; border-color: ${CONFIG.COLOR_PRIMARIO}; }
+      .tm-menu-item .flag-icon { border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+      .tm-menu-item .arrow { font-weight: 900; margin: 0 4px; opacity: 0.7; }
+      .tm-submenu-group { display: flex; gap: 6px; }
+      .tm-submenu-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; background: #ffffff; color: #2d3748; transition: all 0.15s ease; }
+      .tm-submenu-btn.neutral-btn:hover { background: #ebf8ff; border-color: #90cdf4; color: #2b6cb0; }
+      .tm-submenu-btn.hide-btn:hover { background: #fff5f5; border-color: #feb2b2; color: #c53030; }
+      .tm-submenu-btn.show-btn:hover { background: #f0fff4; border-color: #9ae6b4; color: #276749; }
     `;
     document.head.appendChild(style);
 
@@ -374,7 +341,6 @@
 
     let menuHTML = '';
 
-    // Si estamos en remoto mostramos el cambio de PMA y el salto a localhost
     if (!isLocalhost) {
       menuHTML += `
         <div class="tm-menu-section-title">Entorno</div>
@@ -385,46 +351,29 @@
 
         <div class="tm-menu-section-title">Abrir en Localhost</div>
         <div class="tm-submenu-group">
-          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-same" title="Abrir en esta misma pestaña">
-            ${iconSameTab} Aquí
-          </button>
-          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-new" title="Abrir en una nueva pestaña">
-            ${iconNewTab} Nueva
-          </button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-same" title="Abrir en esta misma pestaña">${iconSameTab} Aquí</button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-local-new" title="Abrir en una nueva pestaña">${iconNewTab} Nueva</button>
         </div>
       `;
     } else {
-      // Si estamos en localhost, mostramos la opción de regresar a remoto
       menuHTML += `
         <div class="tm-menu-section-title">Abrir en Remoto (PMA)</div>
         <div class="tm-submenu-group">
-          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-same" title="Abrir en esta misma pestaña">
-            ${iconSameTab} Aquí
-          </button>
-          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-new" title="Abrir en una nueva pestaña">
-            ${iconNewTab} Nueva
-          </button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-same" title="Abrir en esta misma pestaña">${iconSameTab} Aquí</button>
+          <button class="tm-submenu-btn neutral-btn" id="tm-btn-remote-new" title="Abrir en una nueva pestaña">${iconNewTab} Nueva</button>
         </div>
       `;
     }
 
-    // Común: Ventanas de Error
     menuHTML += `
       <div class="tm-menu-section-title">Ventanas de Error</div>
       <div class="tm-submenu-group">
-        <button class="tm-submenu-btn hide-btn" id="tm-btn-hide-error">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-          Ocultar
-        </button>
-        <button class="tm-submenu-btn show-btn" id="tm-btn-show-error">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          Mostrar
-        </button>
+        <button class="tm-submenu-btn hide-btn" id="tm-btn-hide-error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg> Ocultar</button>
+        <button class="tm-submenu-btn show-btn" id="tm-btn-show-error"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg> Mostrar</button>
       </div>
     `;
 
     menu.innerHTML = menuHTML;
-
     const btn = document.createElement('div');
     btn.id = 'tm-devutils-btn';
     btn.innerHTML = devIconSvg;
@@ -438,80 +387,34 @@
 
     function actualizarPosicionMenu() {
       const rect = wrapper.getBoundingClientRect();
-      const midY = window.innerHeight / 2;
-      const midX = window.innerWidth / 2;
-
-      if (rect.top > midY) {
-        menu.style.top = 'auto';
-        menu.style.bottom = '56px';
-      } else {
-        menu.style.bottom = 'auto';
-        menu.style.top = '56px';
-      }
-
-      if (rect.left > midX) {
-        menu.style.left = 'auto';
-        menu.style.right = '0px';
-      } else {
-        menu.style.right = 'auto';
-        menu.style.left = '0px';
-      }
+      if (rect.top > window.innerHeight / 2) { menu.style.top = 'auto'; menu.style.bottom = '56px'; }
+      else { menu.style.bottom = 'auto'; menu.style.top = '56px'; }
+      if (rect.left > window.innerWidth / 2) { menu.style.left = 'auto'; menu.style.right = '0px'; }
+      else { menu.style.right = 'auto'; menu.style.left = '0px'; }
     }
 
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (wrapper.dataset.dragged === 'true') {
-        wrapper.dataset.dragged = 'false';
-        return;
-      }
-
-      if (!wrapper.classList.contains('open')) {
-        actualizarPosicionMenu();
-        wrapper.classList.add('open');
-      } else {
-        wrapper.classList.remove('open');
-      }
+      if (wrapper.dataset.dragged === 'true') { wrapper.dataset.dragged = 'false'; return; }
+      if (!wrapper.classList.contains('open')) { actualizarPosicionMenu(); wrapper.classList.add('open'); }
+      else { wrapper.classList.remove('open'); }
     });
 
     document.addEventListener('click', (e) => {
-      if (!wrapper.contains(e.target)) {
-        wrapper.classList.remove('open');
-      }
+      if (!wrapper.contains(e.target)) wrapper.classList.remove('open');
     });
 
-    // Listeners según entorno
     if (!isLocalhost) {
-      document.getElementById('tm-item-switch').addEventListener('click', () => {
-        switchEnvironment();
-      });
-      document.getElementById('tm-btn-local-same').addEventListener('click', () => {
-        abrirLocalhost(false);
-        wrapper.classList.remove('open');
-      });
-      document.getElementById('tm-btn-local-new').addEventListener('click', () => {
-        abrirLocalhost(true);
-        wrapper.classList.remove('open');
-      });
+      document.getElementById('tm-item-switch').addEventListener('click', () => switchEnvironment());
+      document.getElementById('tm-btn-local-same').addEventListener('click', () => { abrirLocalhost(false); wrapper.classList.remove('open'); });
+      document.getElementById('tm-btn-local-new').addEventListener('click', () => { abrirLocalhost(true); wrapper.classList.remove('open'); });
     } else {
-      document.getElementById('tm-btn-remote-same').addEventListener('click', () => {
-        abrirRemoto(false);
-        wrapper.classList.remove('open');
-      });
-      document.getElementById('tm-btn-remote-new').addEventListener('click', () => {
-        abrirRemoto(true);
-        wrapper.classList.remove('open');
-      });
+      document.getElementById('tm-btn-remote-same').addEventListener('click', () => { abrirRemoto(false); wrapper.classList.remove('open'); });
+      document.getElementById('tm-btn-remote-new').addEventListener('click', () => { abrirRemoto(true); wrapper.classList.remove('open'); });
     }
 
-    document.getElementById('tm-btn-hide-error').addEventListener('click', () => {
-      ocultarError();
-      wrapper.classList.remove('open');
-    });
-
-    document.getElementById('tm-btn-show-error').addEventListener('click', () => {
-      mostrarError();
-      wrapper.classList.remove('open');
-    });
+    document.getElementById('tm-btn-hide-error').addEventListener('click', () => { ocultarError(); wrapper.classList.remove('open'); });
+    document.getElementById('tm-btn-show-error').addEventListener('click', () => { mostrarError(); wrapper.classList.remove('open'); });
   }
 
   if (document.readyState === 'loading') {
